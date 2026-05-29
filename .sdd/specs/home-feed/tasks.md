@@ -91,12 +91,12 @@
   - _Requirements: 8.2, 8.3, 8.5_
 
 - [ ] 6. Application shell, routing, and navigation
-- [ ] 6.1 Establish routes and the authenticated layout
+- [x] 6.1 Establish routes and the authenticated layout
   - Define routes for Home, Shelves, Catalog, and Profile via file-based routing, plus a not-found page and the unauthenticated auth surface
   - Render only the active route's page as primary content, and hide the hero, stats panel, and feed on non-Home pages
   - _Requirements: 2.1, 2.6, 2.7, 7.5_
 
-- [ ] 6.2 Build the persistent navigation
+- [x] 6.2 Build the persistent navigation
   - Provide cross-page navigation that updates the URL without a full reload, supports back/forward, indicates the active link accessibly, and is extensible for additional routes such as Recommendations
   - Ensure unauthenticated users see the auth surface rather than signed-in navigation
   - _Requirements: 2.2, 2.3, 2.4, 2.5, 2.8, 13.3, 13.5_
