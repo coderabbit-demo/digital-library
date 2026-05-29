@@ -68,24 +68,24 @@
   - _Requirements: 9.4, 9.7, 8.4_
 
 - [ ] 5. Backend data API
-- [ ] 5.1 (P) Profile read/update endpoints
+- [x] 5.1 (P) Profile read/update endpoints
   - Return the authenticated user's profile and preferences; update name, email, bio, and media preferences with validation and duplicate-email handling
   - _Requirements: 8.1, 8.3, 7.3_
 
-- [ ] 5.2 (P) Media catalog listing and custom-item creation endpoints
+- [x] 5.2 (P) Media catalog listing and custom-item creation endpoints
   - List media items (optionally filtered by type) and create a custom `ebook` item linked to a new library entry
   - _Requirements: 8.1, 8.3, 7.2, 6.1_
 
-- [ ] 5.3 (P) Library entry and review endpoints
+- [x] 5.3 (P) Library entry and review endpoints
   - Create/update a library entry's status for the authenticated user and record the corresponding activity
   - Save a 1–5 rating and review for a finished item, enforcing ownership
   - _Requirements: 8.1, 8.3, 7.1, 7.4, 9.7_
 
-- [ ] 5.4 (P) Activity feed retrieval endpoint
+- [x] 5.4 (P) Activity feed retrieval endpoint
   - Return community activity joined to actor and media item, newest first, optionally filtered by media type, omitting entries that cannot be resolved
   - _Requirements: 8.1, 4.2, 4.4, 4.6, 5.4_
 
-- [ ] 5.5 Validate inputs and standardize typed responses across endpoints
+- [x] 5.5 Validate inputs and standardize typed responses across endpoints
   - Apply input validation and consistent typed JSON responses with success, client-error, and server-error status codes
   - Confirm the browser reaches data only through these endpoints, holding no database credentials
   - _Requirements: 8.2, 8.3, 8.5_

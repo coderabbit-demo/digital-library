@@ -3,7 +3,7 @@
  * so request/response payloads are checked at compile time (Req 8.5).
  * Endpoint implementations land in DL-20 / DL-22..DL-26.
  */
-import type { LibraryStatus, MediaType, Preferences, User } from "./domain";
+import type { LibraryEntry, LibraryStatus, MediaItem, MediaType, Preferences, User } from "./domain";
 
 /** Discriminated result envelope returned by client API helpers. */
 export type ApiResult<T> =
@@ -73,4 +73,26 @@ export interface CustomMediaRequest {
 
 export interface AuthResponse {
   user: User;
+}
+
+export interface ProfileResponse {
+  user: User;
+  preferences: Preferences;
+}
+
+export interface MediaListResponse {
+  items: MediaItem[];
+}
+
+export interface MediaCreateResponse {
+  item: MediaItem;
+  entry: LibraryEntry;
+}
+
+export interface LibraryEntryResponse {
+  entry: LibraryEntry;
+}
+
+export interface ActivitiesResponse {
+  entries: FeedEntryDTO[];
 }

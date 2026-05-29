@@ -5,6 +5,7 @@
  */
 import { eq } from "drizzle-orm";
 import type { Db } from "@/db/client";
+import { isUniqueViolation } from "@/db/errors";
 import { findPasswordCredential, normalizeEmail } from "@/db/queries";
 import { authIdentities, users } from "@/db/schema";
 import { toUser } from "@/db/mappers";
@@ -52,18 +53,6 @@ export function pickAvatarColor(seed: string): string {
 }
 
 export type RegisterResult = { ok: true; user: User } | { ok: false; error: "email_taken" };
-
-/** Postgres unique-violation SQLSTATE. */
-const UNIQUE_VIOLATION = "23505";
-
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === UNIQUE_VIOLATION
-  );
-}
 
 export async function registerMember(db: Db, input: RegisterInput): Promise<RegisterResult> {
   const passwordHash = await hashPassword(input.password);

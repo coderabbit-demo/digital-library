@@ -142,6 +142,11 @@ export async function listMedia(db: Db, type?: MediaType): Promise<MediaItem[]> 
   return rows.map(toMediaItem);
 }
 
+export async function findMediaById(db: Db, id: string): Promise<MediaItem | null> {
+  const [row] = await db.select().from(mediaItems).where(eq(mediaItems.id, id)).limit(1);
+  return row ? toMediaItem(row) : null;
+}
+
 export async function findMediaByTitleCreator(
   db: Db,
   title: string,
