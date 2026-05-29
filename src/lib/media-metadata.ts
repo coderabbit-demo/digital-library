@@ -63,6 +63,10 @@ export function parseMediaMetadata(type: string, raw: unknown): MediaItemMetadat
   }
 }
 
+function pluralize(count: number, singular: string): string {
+  return `${count} ${singular}${count === 1 ? "" : "s"}`;
+}
+
 /** A type-appropriate secondary meta line for a media card (Req 8.1). */
 export function formatMetaLine(item: MediaItem): string {
   const meta = item.metadata ?? null;
@@ -71,12 +75,12 @@ export function formatMetaLine(item: MediaItem): string {
       return meta.album ?? item.genre;
     case "podcast": {
       const parts = [meta.show ?? item.genre];
-      if (meta.episodeCount !== undefined) parts.push(`${meta.episodeCount} episodes`);
+      if (meta.episodeCount !== undefined) parts.push(pluralize(meta.episodeCount, "episode"));
       return parts.join(" · ");
     }
     case "tv_movie": {
       const parts = [item.genre];
-      if (meta.seasons !== undefined) parts.push(`${meta.seasons} seasons`);
+      if (meta.seasons !== undefined) parts.push(pluralize(meta.seasons, "season"));
       return parts.join(" · ");
     }
     case "ebook":

@@ -38,5 +38,8 @@ describe("media-metadata (DL-42)", () => {
     expect(
       formatMetaLine({ ...base, type: "podcast", metadata: { kind: "podcast", show: "RA", episodeCount: 12 } }),
     ).toBe("RA · 12 episodes");
+    expect(
+      formatMetaLine({ ...base, type: "tv_movie", metadata: { kind: "tv_movie", seasons: 1 } }),
+    ).toBe("Fiction · 1 season");
   });
 });
