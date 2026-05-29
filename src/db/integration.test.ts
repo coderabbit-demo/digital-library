@@ -3,9 +3,13 @@ import { loginMember, registerMember } from "@/lib/auth/service";
 import { createSession, resolveSession, revokeSession } from "@/lib/auth/session";
 import {
   findEntry,
+  findUserByEmail,
+  getActiveGoal,
   insertActivity,
   insertMediaItem,
   listFeed,
+  listMedia,
+  listUserAchievements,
   saveReview,
   upsertEntryStatus,
 } from "@/db/queries";
@@ -131,9 +135,20 @@ describe("migration + seed integration (DL-36, Req 10.5)", () => {
     expect(feed.length).toBeGreaterThan(0);
     // Demo member can sign in with the seeded password.
     expect((await loginMember(db, { email: "ava@example.com", password: "readmore" }))).not.toBeNull();
-    // Whole starter catalog present.
+    // Whole starter catalog present, spanning multiple media types.
     const allMedia = await listFeed(db, {});
     expect(allMedia.length).toBeGreaterThan(0);
-    expect(seedMediaItems.length).toBe(11);
+    expect(seedMediaItems.length).toBe(16);
+    const types = new Set((await listMedia(db)).map((m) => m.type));
+    expect(types.size).toBeGreaterThan(1);
+    expect(types.has("music")).toBe(true);
+
+    // Demo member has a goal and derived achievement unlocks (Req 14.4).
+    const ava = await findUserByEmail(db, "ava@example.com");
+    expect(ava).not.toBeNull();
+    if (ava) {
+      expect((await getActiveGoal(db, ava.id, "year", "2026"))?.targetCount).toBe(24);
+      expect((await listUserAchievements(db, ava.id)).length).toBeGreaterThan(0);
+    }
   });
 });

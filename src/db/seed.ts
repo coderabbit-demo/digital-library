@@ -10,20 +10,25 @@
  */
 import "./load-env";
 import bcrypt from "bcryptjs";
+import { recordNewlyUnlocked } from "@/lib/achievements-service";
 import { getDb, type Db } from "./client";
 import {
   activities,
   authIdentities,
+  goals,
   libraryEntries,
+  libraryEntryTags,
   mediaItems,
   preferences,
   sessions,
+  userAchievements,
   users,
 } from "./schema";
 import {
   seedActivities,
   seedCommunityUsers,
   seedDemoMember,
+  seedGoal,
   seedLibraryEntries,
   seedMediaItems,
 } from "./seed-data";
@@ -37,6 +42,9 @@ export async function seed(db: Db): Promise<void> {
   await db.transaction(async (tx) => {
     // Clear in FK-safe order so re-seeding is deterministic.
     await tx.delete(activities);
+    await tx.delete(userAchievements);
+    await tx.delete(goals);
+    await tx.delete(libraryEntryTags);
     await tx.delete(libraryEntries);
     await tx.delete(preferences);
     await tx.delete(sessions);
@@ -57,6 +65,8 @@ export async function seed(db: Db): Promise<void> {
           language: m.language,
           description: m.description,
           coverTheme: m.coverTheme,
+          metadata: m.metadata ?? null,
+          totalUnits: m.totalUnits ?? null,
         })
         .returning({ id: mediaItems.id });
       if (!row) throw new Error(`failed to insert media item: ${m.key}`);
@@ -101,17 +111,35 @@ export async function seed(db: Db): Promise<void> {
       return id;
     };
 
-    // Demo member's shelves.
+    // Demo member's shelves, with progress and tags.
     for (const e of seedLibraryEntries) {
-      await tx.insert(libraryEntries).values({
-        userId: resolve(userIdByKey, e.userKey, "user"),
-        mediaItemId: resolve(mediaIdByKey, e.mediaKey, "media"),
-        status: e.status,
-        rating: e.rating,
-        review: e.review,
-        updatedAt: new Date(e.updatedAt),
-      });
+      const [entryRow] = await tx
+        .insert(libraryEntries)
+        .values({
+          userId: resolve(userIdByKey, e.userKey, "user"),
+          mediaItemId: resolve(mediaIdByKey, e.mediaKey, "media"),
+          status: e.status,
+          rating: e.rating,
+          review: e.review,
+          progress: e.progress ?? null,
+          updatedAt: new Date(e.updatedAt),
+        })
+        .returning({ id: libraryEntries.id });
+      if (!entryRow) throw new Error(`failed to insert library entry: ${e.mediaKey}`);
+      if (e.tags && e.tags.length > 0) {
+        await tx
+          .insert(libraryEntryTags)
+          .values(e.tags.map((tag) => ({ entryId: entryRow.id, tag })));
+      }
     }
+
+    // Demo member's reading goal.
+    await tx.insert(goals).values({
+      userId: resolve(userIdByKey, seedGoal.userKey, "user"),
+      period: seedGoal.period,
+      periodKey: seedGoal.periodKey,
+      targetCount: seedGoal.targetCount,
+    });
 
     // Community + member activity for the feed.
     for (const a of seedActivities) {
@@ -123,6 +151,10 @@ export async function seed(db: Db): Promise<void> {
         createdAt: new Date(a.createdAt),
       });
     }
+
+    // Derive and persist the demo member's achievement unlocks from the seeded
+    // data so the dashboard shows real unlocks after setup (Req 14.4).
+    await recordNewlyUnlocked(tx, member.id, new Date());
   });
 }
 
