@@ -8,6 +8,7 @@
  *
  * Idempotent: clears the seeded tables first so re-running yields a clean state.
  */
+import "./load-env";
 import bcrypt from "bcryptjs";
 import { getDb, type Db } from "./client";
 import {
