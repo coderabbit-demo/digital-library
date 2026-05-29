@@ -10,6 +10,22 @@
 /** Open set: the UI must never assume the only media type is "ebook" (Req 6.1). */
 export type MediaType = string;
 
+/** Known media-type kinds with type-specific metadata (media-platform-v2 Req 1.1). */
+export const MEDIA_KINDS = ["ebook", "music", "podcast", "tv_movie"] as const;
+export type MediaKind = (typeof MEDIA_KINDS)[number];
+
+/**
+ * Type-specific metadata stored on a media item (jsonb), discriminated on the
+ * media kind. The open `MediaType` remains the canonical type; this captures
+ * the per-kind extras and is validated into this union at the boundary so it is
+ * never read as `any`. Unknown types carry no metadata (null).
+ */
+export type MediaItemMetadata =
+  | { kind: "ebook"; pages?: number }
+  | { kind: "music"; album?: string }
+  | { kind: "podcast"; show?: string; episodeCount?: number }
+  | { kind: "tv_movie"; runtimeMinutes?: number; seasons?: number };
+
 export const LIBRARY_STATUSES = ["wishlist", "current", "finished"] as const;
 export type LibraryStatus = (typeof LIBRARY_STATUSES)[number];
 
@@ -62,6 +78,10 @@ export interface MediaItem {
   language: string;
   description: string;
   coverTheme: string;
+  /** Type-specific extras; null/absent for legacy rows and unknown types (Req 1.1, 1.4). */
+  metadata?: MediaItemMetadata | null;
+  /** Total consumable units (pages/episodes/runtime) backing progress (Req 3.1). */
+  totalUnits?: number | null;
 }
 
 export interface LibraryEntry {
@@ -72,7 +92,29 @@ export interface LibraryEntry {
   /** 1-5 when present; null otherwise (Req 10.4). */
   rating: number | null;
   review: string;
+  /** Consumption progress (e.g. pages read); null when not tracked (Req 3.1). */
+  progress?: number | null;
   updatedAt: string;
+}
+
+/** A per-user periodic reading goal (media-platform-v2 Req 4). */
+export interface Goal {
+  id: string;
+  userId: string;
+  /** Period granularity, e.g. "year". */
+  period: string;
+  /** Period instance, e.g. "2026". */
+  periodKey: string;
+  targetCount: number;
+  createdAt: string;
+}
+
+/** A persisted achievement unlock for a user (media-platform-v2 Req 6). */
+export interface UserAchievement {
+  id: string;
+  userId: string;
+  achievementKey: string;
+  achievedAt: string;
 }
 
 export interface Activity {

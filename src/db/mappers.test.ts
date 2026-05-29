@@ -21,6 +21,8 @@ const media: MediaItemRow = {
   language: "English",
   description: "",
   coverTheme: "gold",
+  metadata: null,
+  totalUnits: null,
 };
 
 describe("db mappers (DL-15)", () => {
@@ -48,12 +50,14 @@ describe("db mappers (DL-15)", () => {
       status: "finished",
       rating: 5,
       review: "Quietly brilliant.",
+      progress: 318,
       updatedAt: new Date("2026-05-27T20:35:00.000Z"),
     };
     const entry = toLibraryEntry(row);
     expect(entry.updatedAt).toBe("2026-05-27T20:35:00.000Z");
     expect(entry.status).toBe("finished");
     expect(entry.rating).toBe(5);
+    expect(entry.progress).toBe(318);
   });
 
   it("converts activity timestamps to ISO strings", () => {

@@ -8,6 +8,13 @@
       "when": 1780015326862,
       "tag": "0000_complete_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780086921909,
+      "tag": "0001_chief_the_watchers",
+      "breakpoints": true
     }
   ]
 }

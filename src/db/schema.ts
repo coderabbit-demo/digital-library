@@ -19,7 +19,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { Preferences } from "@/lib/types/domain";
+import type { MediaItemMetadata, Preferences } from "@/lib/types/domain";
 
 /** Members (can authenticate) and community actors (feed-only) share one table. */
 export const users = pgTable(
@@ -98,6 +98,11 @@ export const mediaItems = pgTable("media_items", {
   language: text("language").notNull().default("English"),
   description: text("description").notNull().default(""),
   coverTheme: text("cover_theme").notNull().default("teal"),
+  // Type-specific extras (album, episode count, …); null for legacy/unknown
+  // types (media-platform-v2 Req 1.1, 1.4). Validated into the domain union.
+  metadata: jsonb("metadata").$type<MediaItemMetadata>(),
+  // Total consumable units (pages/episodes/runtime) backing progress (Req 3.1).
+  totalUnits: integer("total_units"),
 });
 
 export const libraryEntries = pgTable(
@@ -113,6 +118,8 @@ export const libraryEntries = pgTable(
     status: text("status").notNull(),
     rating: integer("rating"),
     review: text("review").notNull().default(""),
+    // Consumption progress (e.g. pages read); null when not tracked (Req 3.1).
+    progress: integer("progress"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -122,6 +129,59 @@ export const libraryEntries = pgTable(
       "library_entries_rating_check",
       sql`${t.rating} is null or (${t.rating} >= 1 and ${t.rating} <= 5)`,
     ),
+    check("library_entries_progress_check", sql`${t.progress} is null or ${t.progress} >= 0`),
+  ],
+);
+
+/** User-scoped, free-form tags on a library entry (media-platform-v2 Req 2). */
+export const libraryEntryTags = pgTable(
+  "library_entry_tags",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    entryId: uuid("entry_id")
+      .notNull()
+      .references(() => libraryEntries.id, { onDelete: "cascade" }),
+    tag: text("tag").notNull(),
+  },
+  (t) => [
+    unique("library_entry_tags_entry_tag_unique").on(t.entryId, t.tag),
+    index("library_entry_tags_entry_id_idx").on(t.entryId),
+  ],
+);
+
+/** One active periodic reading goal per user/period/period-key (Req 4). */
+export const goals = pgTable(
+  "goals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    period: text("period").notNull(),
+    periodKey: text("period_key").notNull(),
+    targetCount: integer("target_count").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("goals_user_period_key_unique").on(t.userId, t.period, t.periodKey),
+    check("goals_target_count_check", sql`${t.targetCount} >= 1`),
+  ],
+);
+
+/** Persisted achievement unlocks per user; one row per first unlock (Req 6). */
+export const userAchievements = pgTable(
+  "user_achievements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    achievementKey: text("achievement_key").notNull(),
+    achievedAt: timestamp("achieved_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("user_achievements_user_key_unique").on(t.userId, t.achievementKey),
+    index("user_achievements_user_id_idx").on(t.userId),
   ],
 );
 
@@ -167,3 +227,7 @@ export type MediaItemRow = typeof mediaItems.$inferSelect;
 export type LibraryEntryRow = typeof libraryEntries.$inferSelect;
 export type ActivityRow = typeof activities.$inferSelect;
 export type PreferencesRow = typeof preferences.$inferSelect;
+export type LibraryEntryTagRow = typeof libraryEntryTags.$inferSelect;
+export type GoalRow = typeof goals.$inferSelect;
+export type NewGoalRow = typeof goals.$inferInsert;
+export type UserAchievementRow = typeof userAchievements.$inferSelect;
