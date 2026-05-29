@@ -41,22 +41,27 @@ export function ProfileForm({ user, preferences }: ProfileFormProps): React.JSX.
       podcasts: { topics: field(data, "podcastTopics") },
       streaming: { favoriteGenres: field(data, "streamingGenres") },
     };
-    const result = await sendJson(
-      "/api/profile",
-      {
-        name: data.get("name"),
-        email: data.get("email"),
-        bio: data.get("bio"),
-        preferences: nextPreferences,
-      },
-      "PUT",
-    );
-    setPending(false);
-    if (result.ok) {
-      setMessage("Profile saved.");
-      router.refresh();
-    } else {
-      setError(result.message ?? "Could not save profile.");
+    try {
+      const result = await sendJson(
+        "/api/profile",
+        {
+          name: data.get("name"),
+          email: data.get("email"),
+          bio: data.get("bio"),
+          preferences: nextPreferences,
+        },
+        "PUT",
+      );
+      if (result.ok) {
+        setMessage("Profile saved.");
+        router.refresh();
+      } else {
+        setError(result.message ?? "Could not save profile.");
+      }
+    } catch {
+      setError("Could not save profile.");
+    } finally {
+      setPending(false);
     }
   }
 

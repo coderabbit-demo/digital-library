@@ -16,20 +16,25 @@ export function CustomBookForm(): React.JSX.Element {
     setError(null);
     const form = event.currentTarget;
     const data = new FormData(form);
-    const result = await sendJson("/api/media", {
-      title: data.get("title"),
-      creator: data.get("creator"),
-      genre: data.get("genre"),
-      language: data.get("language"),
-      description: data.get("description"),
-      status: data.get("status"),
-    });
-    setPending(false);
-    if (result.ok) {
-      form.reset();
-      router.refresh();
-    } else {
-      setError(result.message ?? "Could not add the book.");
+    try {
+      const result = await sendJson("/api/media", {
+        title: data.get("title"),
+        creator: data.get("creator"),
+        genre: data.get("genre"),
+        language: data.get("language"),
+        description: data.get("description"),
+        status: data.get("status"),
+      });
+      if (result.ok) {
+        form.reset();
+        router.refresh();
+      } else {
+        setError(result.message ?? "Could not add the book.");
+      }
+    } catch {
+      setError("Could not add the book.");
+    } finally {
+      setPending(false);
     }
   }
 

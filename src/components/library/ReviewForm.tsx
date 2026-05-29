@@ -21,14 +21,19 @@ export function ReviewForm({ entryId, rating, review }: ReviewFormProps): React.
     setPending(true);
     setError(null);
     const data = new FormData(event.currentTarget);
-    const result = await sendJson("/api/library/review", {
-      entryId,
-      rating: Number(data.get("rating")),
-      review: data.get("review"),
-    });
-    setPending(false);
-    if (result.ok) router.refresh();
-    else setError(result.message ?? "Could not save review.");
+    try {
+      const result = await sendJson("/api/library/review", {
+        entryId,
+        rating: Number(data.get("rating")),
+        review: data.get("review"),
+      });
+      if (result.ok) router.refresh();
+      else setError(result.message ?? "Could not save review.");
+    } catch {
+      setError("Could not save review.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (

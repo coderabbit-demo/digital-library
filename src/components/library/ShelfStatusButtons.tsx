@@ -24,10 +24,15 @@ export function ShelfStatusButtons({ mediaItemId }: ShelfStatusButtonsProps): Re
   async function move(status: LibraryStatus): Promise<void> {
     setPending(true);
     setError(null);
-    const result = await sendJson("/api/library", { mediaItemId, status });
-    setPending(false);
-    if (result.ok) router.refresh();
-    else setError(result.message ?? "Could not update shelf.");
+    try {
+      const result = await sendJson("/api/library", { mediaItemId, status });
+      if (result.ok) router.refresh();
+      else setError(result.message ?? "Could not update shelf.");
+    } catch {
+      setError("Could not update shelf.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
