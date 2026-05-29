@@ -20,7 +20,7 @@
   - _Requirements: 1.6, 13.2_
 
 - [ ] 2. PostgreSQL schema, migrations, seed, and data access
-- [ ] 2.1 Define the relational schema and generate the initial migration
+- [x] 2.1 Define the relational schema and generate the initial migration
   - Model a single users table (member and community actors) with nullable-unique email, separate auth identities (one row per provider) and sessions tables, plus media items, library entries, activities, and preferences
   - Enforce foreign keys to the single users table, the wishlist/current/finished status set, an optional 1–5 rating, and optional review text
   - Capture the schema through a versioned, checked-in migration
