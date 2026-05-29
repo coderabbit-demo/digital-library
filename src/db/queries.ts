@@ -246,6 +246,15 @@ export async function listFeed(db: DbExecutor,
   return rows.map((r) => toFeedEntry(r.activity, r.actor, r.media));
 }
 
+/** A user's own activity timestamps (ISO), for streak computation (Req 5.3). */
+export async function listActivityDatesForUser(db: DbExecutor, userId: string): Promise<string[]> {
+  const rows = await db
+    .select({ createdAt: activities.createdAt })
+    .from(activities)
+    .where(eq(activities.userId, userId));
+  return rows.map((r) => r.createdAt.toISOString());
+}
+
 /* ----------------------------- entry tags (Req 2) ------------------------ */
 
 /** Tags for a set of entries, aggregated per entry id and sorted for stable display. */

@@ -2,8 +2,15 @@
  * Pure request validators for the data API (DL-22..DL-26). Each returns a typed,
  * normalized value or null; handlers turn null into a 400.
  */
-import { isLibraryStatus, type LibraryStatus, type Preferences } from "@/lib/types";
+import {
+  isLibraryStatus,
+  type LibraryStatus,
+  type MediaItemMetadata,
+  type Preferences,
+} from "@/lib/types";
 import { normalizePreferences } from "@/lib/preferences";
+import { parseMediaMetadata } from "@/lib/media-metadata";
+import { normalizeTags } from "@/lib/tags";
 
 function asObject(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
@@ -66,12 +73,15 @@ export function validateReview(body: unknown): ReviewInput | null {
 }
 
 export interface CustomMedia {
+  type: string;
   title: string;
   creator: string;
   genre: string;
   language: string;
   description: string;
   status: LibraryStatus;
+  metadata: MediaItemMetadata | null;
+  tags: string[];
 }
 export function validateCustomMedia(body: unknown): CustomMedia | null {
   const b = asObject(body);
@@ -80,12 +90,56 @@ export function validateCustomMedia(body: unknown): CustomMedia | null {
   const genre = asString(b.genre).trim();
   const status = asString(b.status).trim();
   if (!title || !creator || !genre || !isLibraryStatus(status)) return null;
+  // Type is open and data-driven; default to ebook for back-compat. Metadata is
+  // validated into the domain union (null for unknown types), tags normalized.
+  const type = asString(b.type).trim() || "ebook";
+  if (type.length > MAX_TYPE_LENGTH) return null;
   return {
+    type,
     title,
     creator,
     genre,
     language: asString(b.language).trim() || "English",
     description: asString(b.description).trim(),
     status,
+    metadata: parseMediaMetadata(type, b.metadata),
+    tags: normalizeTags(b.tags),
   };
+}
+
+export interface TagsInput {
+  entryId: string;
+  tags: string[];
+}
+export function validateTags(body: unknown): TagsInput | null {
+  const b = asObject(body);
+  const entryId = asString(b.entryId).trim();
+  if (!entryId) return null;
+  return { entryId, tags: normalizeTags(b.tags) };
+}
+
+export interface ProgressInput {
+  entryId: string;
+  progress: number;
+}
+export function validateProgress(body: unknown): ProgressInput | null {
+  const b = asObject(body);
+  const entryId = asString(b.entryId).trim();
+  const progress = typeof b.progress === "number" ? b.progress : Number(b.progress);
+  if (!entryId || !Number.isInteger(progress) || progress < 0) return null;
+  return { entryId, progress };
+}
+
+export interface GoalInput {
+  period: string;
+  periodKey: string | null;
+  targetCount: number;
+}
+export function validateGoal(body: unknown): GoalInput | null {
+  const b = asObject(body);
+  const targetCount = typeof b.targetCount === "number" ? b.targetCount : Number(b.targetCount);
+  if (!Number.isInteger(targetCount) || targetCount < 1) return null;
+  const period = asString(b.period).trim() || "year";
+  const periodKey = asString(b.periodKey).trim() || null;
+  return { period, periodKey, targetCount };
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
 import { insertActivity, saveReview } from "@/db/queries";
 import { reviewDetail } from "@/lib/activity";
+import { recordNewlyUnlocked } from "@/lib/achievements-service";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { apiError, badRequest, serverError, unauthorized } from "@/lib/api/responses";
 import { validateReview } from "@/lib/api/validation";
@@ -46,6 +47,13 @@ export async function POST(request: Request): Promise<NextResponse<LibraryEntryR
       return saved;
     });
     if (!entry) return apiError(404, "Library entry not found.");
+
+    // Best-effort: a review may unlock achievements; never fail the write.
+    try {
+      await recordNewlyUnlocked(db, user.id, new Date());
+    } catch (error) {
+      console.error("achievement unlock recording failed:", error);
+    }
     return NextResponse.json({ entry });
   } catch {
     return serverError();
