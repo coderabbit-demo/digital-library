@@ -30,91 +30,99 @@ import {
 const BCRYPT_COST = 12;
 
 export async function seed(db: Db): Promise<void> {
-  // Clear in FK-safe order so re-seeding is deterministic.
-  await db.delete(activities);
-  await db.delete(libraryEntries);
-  await db.delete(preferences);
-  await db.delete(sessions);
-  await db.delete(authIdentities);
-  await db.delete(mediaItems);
-  await db.delete(users);
+  // Run the whole reset+repopulate atomically: any failure (including an
+  // unresolved reference below) rolls back, so the database is never left in a
+  // partially wiped or partially populated state.
+  await db.transaction(async (tx) => {
+    // Clear in FK-safe order so re-seeding is deterministic.
+    await tx.delete(activities);
+    await tx.delete(libraryEntries);
+    await tx.delete(preferences);
+    await tx.delete(sessions);
+    await tx.delete(authIdentities);
+    await tx.delete(mediaItems);
+    await tx.delete(users);
 
-  // Media catalog.
-  const mediaIdByKey = new Map<string, string>();
-  for (const m of seedMediaItems) {
-    const [row] = await db
-      .insert(mediaItems)
-      .values({
-        type: m.type,
-        title: m.title,
-        creator: m.creator,
-        genre: m.genre,
-        language: m.language,
-        description: m.description,
-        coverTheme: m.coverTheme,
-      })
-      .returning({ id: mediaItems.id });
-    if (row) mediaIdByKey.set(m.key, row.id);
-  }
+    // Media catalog.
+    const mediaIdByKey = new Map<string, string>();
+    for (const m of seedMediaItems) {
+      const [row] = await tx
+        .insert(mediaItems)
+        .values({
+          type: m.type,
+          title: m.title,
+          creator: m.creator,
+          genre: m.genre,
+          language: m.language,
+          description: m.description,
+          coverTheme: m.coverTheme,
+        })
+        .returning({ id: mediaItems.id });
+      if (!row) throw new Error(`failed to insert media item: ${m.key}`);
+      mediaIdByKey.set(m.key, row.id);
+    }
 
-  // Users: community actors + the demo member.
-  const userIdByKey = new Map<string, string>();
-  for (const c of seedCommunityUsers) {
-    const [row] = await db
+    // Users: community actors + the demo member.
+    const userIdByKey = new Map<string, string>();
+    for (const c of seedCommunityUsers) {
+      const [row] = await tx
+        .insert(users)
+        .values({ kind: "community", name: c.name, avatarColor: c.avatarColor })
+        .returning({ id: users.id });
+      if (!row) throw new Error(`failed to insert community user: ${c.key}`);
+      userIdByKey.set(c.key, row.id);
+    }
+    const [member] = await tx
       .insert(users)
-      .values({ kind: "community", name: c.name, avatarColor: c.avatarColor })
+      .values({
+        kind: "member",
+        name: seedDemoMember.name,
+        email: seedDemoMember.email,
+        avatarColor: seedDemoMember.avatarColor,
+        bio: seedDemoMember.bio,
+      })
       .returning({ id: users.id });
-    if (row) userIdByKey.set(c.key, row.id);
-  }
-  const [member] = await db
-    .insert(users)
-    .values({
-      kind: "member",
-      name: seedDemoMember.name,
-      email: seedDemoMember.email,
-      avatarColor: seedDemoMember.avatarColor,
-      bio: seedDemoMember.bio,
-    })
-    .returning({ id: users.id });
-  if (!member) throw new Error("failed to insert demo member");
-  userIdByKey.set(seedDemoMember.key, member.id);
+    if (!member) throw new Error("failed to insert demo member");
+    userIdByKey.set(seedDemoMember.key, member.id);
 
-  // Demo member credentials + preferences.
-  await db.insert(authIdentities).values({
-    userId: member.id,
-    provider: "password",
-    passwordHash: await bcrypt.hash(seedDemoMember.password, BCRYPT_COST),
+    // Demo member credentials + preferences.
+    await tx.insert(authIdentities).values({
+      userId: member.id,
+      provider: "password",
+      passwordHash: await bcrypt.hash(seedDemoMember.password, BCRYPT_COST),
+    });
+    await tx.insert(preferences).values({ userId: member.id, ...seedDemoMember.preferences });
+
+    // Resolve a seed key to its generated id, failing the transaction if missing.
+    const resolve = (map: Map<string, string>, key: string, kind: string): string => {
+      const id = map.get(key);
+      if (!id) throw new Error(`unresolved ${kind} reference in seed data: ${key}`);
+      return id;
+    };
+
+    // Demo member's shelves.
+    for (const e of seedLibraryEntries) {
+      await tx.insert(libraryEntries).values({
+        userId: resolve(userIdByKey, e.userKey, "user"),
+        mediaItemId: resolve(mediaIdByKey, e.mediaKey, "media"),
+        status: e.status,
+        rating: e.rating,
+        review: e.review,
+        updatedAt: new Date(e.updatedAt),
+      });
+    }
+
+    // Community + member activity for the feed.
+    for (const a of seedActivities) {
+      await tx.insert(activities).values({
+        userId: resolve(userIdByKey, a.userKey, "user"),
+        mediaItemId: resolve(mediaIdByKey, a.mediaKey, "media"),
+        action: a.action,
+        detail: a.detail,
+        createdAt: new Date(a.createdAt),
+      });
+    }
   });
-  await db.insert(preferences).values({ userId: member.id, ...seedDemoMember.preferences });
-
-  // Demo member's shelves.
-  for (const e of seedLibraryEntries) {
-    const userId = userIdByKey.get(e.userKey);
-    const mediaItemId = mediaIdByKey.get(e.mediaKey);
-    if (!userId || !mediaItemId) continue;
-    await db.insert(libraryEntries).values({
-      userId,
-      mediaItemId,
-      status: e.status,
-      rating: e.rating,
-      review: e.review,
-      updatedAt: new Date(e.updatedAt),
-    });
-  }
-
-  // Community + member activity for the feed.
-  for (const a of seedActivities) {
-    const userId = userIdByKey.get(a.userKey);
-    const mediaItemId = mediaIdByKey.get(a.mediaKey);
-    if (!userId || !mediaItemId) continue;
-    await db.insert(activities).values({
-      userId,
-      mediaItemId,
-      action: a.action,
-      detail: a.detail,
-      createdAt: new Date(a.createdAt),
-    });
-  }
 }
 
 // Entry point for `npm run db:seed`.
