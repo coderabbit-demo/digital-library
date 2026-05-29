@@ -53,31 +53,52 @@ export function pickAvatarColor(seed: string): string {
 
 export type RegisterResult = { ok: true; user: User } | { ok: false; error: "email_taken" };
 
+/** Postgres unique-violation SQLSTATE. */
+const UNIQUE_VIOLATION = "23505";
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === UNIQUE_VIOLATION
+  );
+}
+
 export async function registerMember(db: Db, input: RegisterInput): Promise<RegisterResult> {
   const passwordHash = await hashPassword(input.password);
-  return db.transaction(async (tx) => {
-    const [existing] = await tx
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, input.email))
-      .limit(1);
-    if (existing) return { ok: false as const, error: "email_taken" as const };
+  try {
+    return await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, input.email))
+        .limit(1);
+      if (existing) return { ok: false as const, error: "email_taken" as const };
 
-    const [row] = await tx
-      .insert(users)
-      .values({
-        kind: "member",
-        name: input.name,
-        email: input.email,
-        avatarColor: pickAvatarColor(input.email),
-        bio: "",
-      })
-      .returning();
-    if (!row) throw new Error("failed to create user");
+      const [row] = await tx
+        .insert(users)
+        .values({
+          kind: "member",
+          name: input.name,
+          email: input.email,
+          avatarColor: pickAvatarColor(input.email),
+          bio: "",
+        })
+        .returning();
+      if (!row) throw new Error("failed to create user");
 
-    await tx.insert(authIdentities).values({ userId: row.id, provider: "password", passwordHash });
-    return { ok: true as const, user: toUser(row) };
-  });
+      await tx
+        .insert(authIdentities)
+        .values({ userId: row.id, provider: "password", passwordHash });
+      return { ok: true as const, user: toUser(row) };
+    });
+  } catch (error) {
+    // A concurrent registration can pass the pre-check and lose the unique-email
+    // race at insert; surface that as the same duplicate-email result, not a 500.
+    if (isUniqueViolation(error)) return { ok: false, error: "email_taken" };
+    throw error;
+  }
 }
 
 /** Returns the user on valid credentials, else null (no enumeration). */

@@ -14,23 +14,28 @@ export default function RegisterPage(): React.JSX.Element {
     setError(null);
     setPending(true);
     const data = new FormData(event.currentTarget);
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: data.get("name"),
-        email: data.get("email"),
-        password: data.get("password"),
-      }),
-    });
-    setPending(false);
-    if (res.ok) {
-      router.push("/");
-      router.refresh();
-      return;
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: data.get("name"),
+          email: data.get("email"),
+          password: data.get("password"),
+        }),
+      });
+      if (res.ok) {
+        router.push("/");
+        router.refresh();
+        return;
+      }
+      const body = (await res.json().catch(() => null)) as { message?: string } | null;
+      setError(body?.message ?? "Could not create account.");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setPending(false);
     }
-    const body = (await res.json().catch(() => null)) as { message?: string } | null;
-    setError(body?.message ?? "Could not create account.");
   }
 
   return (

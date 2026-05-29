@@ -11,9 +11,10 @@ export function middleware(request: NextRequest): NextResponse {
   const hasSession = Boolean(request.cookies.get(SESSION_COOKIE_NAME)?.value);
   if (hasSession) return NextResponse.next();
 
-  const loginUrl = request.nextUrl.clone();
-  loginUrl.pathname = "/login";
-  loginUrl.searchParams.set("next", request.nextUrl.pathname);
+  // Preserve the originally-requested path and query so login can return there.
+  // (The fragment/hash is never sent to the server, so it cannot be preserved.)
+  const loginUrl = new URL("/login", request.url);
+  loginUrl.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
   return NextResponse.redirect(loginUrl);
 }
 
