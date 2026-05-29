@@ -55,13 +55,16 @@ export function pickAvatarColor(seed: string): string {
 export type RegisterResult = { ok: true; user: User } | { ok: false; error: "email_taken" };
 
 export async function registerMember(db: Db, input: RegisterInput): Promise<RegisterResult> {
+  // Normalize defensively so lookups (which lowercase) always match, regardless
+  // of caller — not only when routed through validateRegistration.
+  const email = normalizeEmail(input.email);
   const passwordHash = await hashPassword(input.password);
   try {
     return await db.transaction(async (tx) => {
       const [existing] = await tx
         .select({ id: users.id })
         .from(users)
-        .where(eq(users.email, input.email))
+        .where(eq(users.email, email))
         .limit(1);
       if (existing) return { ok: false as const, error: "email_taken" as const };
 
@@ -70,8 +73,8 @@ export async function registerMember(db: Db, input: RegisterInput): Promise<Regi
         .values({
           kind: "member",
           name: input.name,
-          email: input.email,
-          avatarColor: pickAvatarColor(input.email),
+          email,
+          avatarColor: pickAvatarColor(email),
           bio: "",
         })
         .returning();

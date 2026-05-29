@@ -133,11 +133,11 @@
   - _Requirements: 7.3, 13.1_
 
 - [ ] 9. Integration, migration application, and tests
-- [ ] 9.1 Wire deploy-time migration application
+- [x] 9.1 Wire deploy-time migration application
   - Ensure migrations are applied so the deployed schema matches the application's expectations as part of the build/release process
   - _Requirements: 12.4, 12.3_
 
-- [ ] 9.2 Add core unit and integration tests
+- [x] 9.2 Add core unit and integration tests
   - Cover media-type label/option derivation (including a non-ebook type), feed selection (ordering, omission, filtering, empty), password hashing/verification, session verification and revocation, duplicate-email rejection, add-to-shelf producing an owned activity, and cross-user authorization denial
   - _Requirements: 5.2, 5.3, 4.4, 4.6, 9.1, 9.2, 9.5, 9.6, 9.7, 7.4_
 
