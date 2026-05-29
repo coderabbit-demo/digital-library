@@ -37,13 +37,13 @@
   - _Requirements: 10.5, 6.4_
 
 - [ ] 3. Local environment and configuration
-- [ ] 3.1 (P) Provide the Docker-based local Postgres environment
+- [x] 3.1 (P) Provide the Docker-based local Postgres environment
   - Add Docker Compose configuration provisioning Postgres with a persistent volume across restarts
   - Allow the app to connect via environment configuration and keep production secrets out of the compose setup
   - Document start, migrate, and seed commands for local use
   - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 3.2 (P) Implement environment-based configuration with fail-fast validation
+- [x] 3.2 (P) Implement environment-based configuration with fail-fast validation
   - Read the database connection string and authentication secret from environment variables only
   - Provide an example environment file documenting required variables without real secrets, and exclude real env files from version control
   - Validate required variables at startup and fail fast with a clear error when missing
