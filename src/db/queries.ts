@@ -285,12 +285,15 @@ export async function setEntryTags(
   if (!owned) return null;
 
   await db.delete(libraryEntryTags).where(eq(libraryEntryTags.entryId, input.entryId));
-  if (input.tags.length > 0) {
+  // Defensively de-duplicate so a caller passing repeats can't violate the
+  // (entry_id, tag) unique constraint after the delete has already run.
+  const tags = [...new Set(input.tags)];
+  if (tags.length > 0) {
     await db
       .insert(libraryEntryTags)
-      .values(input.tags.map((tag) => ({ entryId: input.entryId, tag })));
+      .values(tags.map((tag) => ({ entryId: input.entryId, tag })));
   }
-  return input.tags;
+  return tags;
 }
 
 /* --------------------------- progress (Req 3) ---------------------------- */

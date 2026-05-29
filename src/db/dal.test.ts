@@ -36,7 +36,11 @@ async function user(email: string) {
   return r.user;
 }
 
-async function entryFor(userId: string, status: "wishlist" | "current" | "finished") {
+async function entryFor(
+  userId: string,
+  status: "wishlist" | "current" | "finished",
+  updatedAt = new Date("2026-06-01T00:00:00Z"),
+) {
   const media = await insertMediaItem(db, {
     type: "music",
     title: "Blue",
@@ -48,7 +52,7 @@ async function entryFor(userId: string, status: "wishlist" | "current" | "finish
     metadata: { kind: "music", album: "Blue" },
     totalUnits: null,
   });
-  return upsertEntryStatus(db, { userId, mediaItemId: media.id, status, updatedAt: new Date() });
+  return upsertEntryStatus(db, { userId, mediaItemId: media.id, status, updatedAt });
 }
 
 describe("tags DAL (DL-43)", () => {
@@ -57,10 +61,8 @@ describe("tags DAL (DL-43)", () => {
     const other = await user("other@example.com");
     const entry = await entryFor(owner.id, "current");
 
-    expect(await setEntryTags(db, { entryId: entry.id, userId: owner.id, tags: ["folk", "calm"] })).toEqual([
-      "folk",
-      "calm",
-    ]);
+    const saved = await setEntryTags(db, { entryId: entry.id, userId: owner.id, tags: ["folk", "calm"] });
+    expect(saved).toEqual(["folk", "calm"]);
     expect((await listTagsByEntryIds(db, [entry.id])).get(entry.id)).toEqual(["calm", "folk"]);
 
     // Replacement is a full set-overwrite.
@@ -70,6 +72,11 @@ describe("tags DAL (DL-43)", () => {
     // A different user cannot mutate the owner's tags.
     expect(await setEntryTags(db, { entryId: entry.id, userId: other.id, tags: ["x"] })).toBeNull();
     expect((await listTagsByEntryIds(db, [entry.id])).get(entry.id)).toEqual(["jazz"]);
+
+    // Duplicate input is de-duplicated rather than violating the unique constraint.
+    expect(await setEntryTags(db, { entryId: entry.id, userId: owner.id, tags: ["pop", "pop"] })).toEqual([
+      "pop",
+    ]);
   });
 });
 
@@ -97,8 +104,9 @@ describe("goals DAL (DL-43)", () => {
 
   it("counts finished entries within a date window", async () => {
     const u = await user("c@example.com");
-    await entryFor(u.id, "finished");
-    await entryFor(u.id, "current");
+    await entryFor(u.id, "finished", new Date("2026-03-15T00:00:00Z"));
+    await entryFor(u.id, "finished", new Date("2025-12-31T00:00:00Z")); // outside the window
+    await entryFor(u.id, "current", new Date("2026-03-15T00:00:00Z")); // not finished
     const from = new Date("2026-01-01T00:00:00Z");
     const to = new Date("2027-01-01T00:00:00Z");
     expect(await countFinishedBetween(db, u.id, from, to)).toBe(1);
