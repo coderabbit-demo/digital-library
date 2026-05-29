@@ -26,7 +26,7 @@
   - Capture the schema through a versioned, checked-in migration
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 9.8, 6.1_
 
-- [ ] 2.2 Implement the typed data-access layer
+- [x] 2.2 Implement the typed data-access layer
   - Provide query operations for users, media, library entries, activities, and preferences through the typed ORM layer (no string-concatenated SQL)
   - Select a Postgres driver per environment (serverless/HTTP in production, pooled locally) to avoid connection exhaustion
   - _Requirements: 10.6, 8.2_
