@@ -11,7 +11,11 @@ import { FeedFilter } from "./FeedFilter";
 
 // Render next/link as a plain anchor (no router context needed in unit tests).
 vi.mock("next/link", () => ({
-  default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
+  default: ({
+    href,
+    children,
+    ...rest
+  }: { href: string; children: ReactNode } & Record<string, unknown>) => (
     <a href={href} {...rest}>
       {children}
     </a>
@@ -52,6 +56,11 @@ describe("home components (DL-29/30/31)", () => {
   it("feed shows an empty state when there is no activity", () => {
     render(<Feed entries={[]} />);
     expect(screen.getByText(/no community activity/i)).toBeInTheDocument();
+  });
+
+  it("feed never renders 'Invalid Date' for a malformed timestamp", () => {
+    render(<Feed entries={[entry({ createdAt: "not-a-date" })]} />);
+    expect(screen.queryByText(/invalid date/i)).not.toBeInTheDocument();
   });
 
   it("filter marks the active option for assistive tech", () => {

@@ -5,14 +5,16 @@ export interface FeedProps {
   entries: FeedEntryDTO[];
 }
 
-/** Locale-aware, human-readable timestamp (Req 13.4). */
+/** Locale-aware, human-readable timestamp (Req 13.4); empty for invalid input. */
 function formatTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat(undefined, {
     month: "short",
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
 /** Community activity feed (DL-30). Entries arrive newest-first and resolved. */
