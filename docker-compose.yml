@@ -1,0 +1,33 @@
+# Local development database (DL-17).
+# Provisions PostgreSQL for local dev; the Next.js app runs on the host
+# (`npm run dev`) against it, giving the same routing/API behavior as
+# production. Production uses managed Postgres on Vercel, not this file.
+#
+#   docker compose up -d      # start Postgres (data persists in a volume)
+#   npm run db:migrate        # apply migrations
+#   npm run db:seed           # load starter data
+#   npm run dev               # run the app against the local DB
+#
+# Credentials here are local-only defaults (override via a local .env); never
+# put production secrets in this file.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: libraryloop-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-libraryloop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-libraryloop}
+      POSTGRES_DB: ${POSTGRES_DB:-libraryloop}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - libraryloop-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-libraryloop} -d ${POSTGRES_DB:-libraryloop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  libraryloop-pgdata:
