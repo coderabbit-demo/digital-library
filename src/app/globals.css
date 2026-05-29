@@ -63,7 +63,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
+  --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --input-background: oklch(0.269 0 0);
@@ -95,7 +95,7 @@
     --accent: oklch(0.269 0 0);
     --accent-foreground: oklch(0.985 0 0);
     --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --destructive-foreground: oklch(0.985 0 0);
     --border: oklch(0.269 0 0);
     --input: oklch(0.269 0 0);
     --input-background: oklch(0.269 0 0);
@@ -160,12 +160,12 @@
 :root {
   color-scheme: light dark;
   --ink: #17201e;
-  --muted: #64716d;
+  --legacy-muted: #64716d;
   --line: #d9ded8;
   --surface: #ffffff;
   --surface-alt: #f5f7f3;
   --surface-strong: #edf2ed;
-  --accent: #2f7d7e;
+  --legacy-accent: #2f7d7e;
   --accent-strong: #1f5e60;
   --rose: #8b4a62;
   --gold: #a06f16;
@@ -235,7 +235,7 @@ button {
 .brand span,
 .eyebrow,
 .creator {
-  color: var(--muted);
+  color: var(--legacy-muted);
 }
 
 /* Avatar */
@@ -368,7 +368,7 @@ button {
   border: none;
   border-radius: 10px;
   padding: 10px 16px;
-  background: var(--accent);
+  background: var(--legacy-accent);
   color: white;
   font-weight: 700;
   text-decoration: none;
@@ -414,11 +414,11 @@ button {
   font-size: 1.6rem;
 }
 .stat span {
-  color: var(--muted);
+  color: var(--legacy-muted);
   font-size: 0.82rem;
 }
 .stat-goals {
-  color: var(--muted);
+  color: var(--legacy-muted);
   font-size: 0.82rem;
 }
 .segmented-control {
@@ -432,7 +432,7 @@ button {
   padding: 6px 14px;
   border-radius: 999px;
   text-decoration: none;
-  color: var(--muted);
+  color: var(--legacy-muted);
   font-weight: 700;
   font-size: 0.82rem;
 }
@@ -454,11 +454,11 @@ button {
   align-items: flex-start;
 }
 .feed-item time {
-  color: var(--muted);
+  color: var(--legacy-muted);
   font-size: 0.78rem;
 }
 .empty-state {
-  color: var(--muted);
+  color: var(--legacy-muted);
   padding: 16px 0;
 }
 
@@ -490,7 +490,7 @@ button {
   margin: 4px 0 0;
 }
 .creator {
-  color: var(--muted);
+  color: var(--legacy-muted);
   font-size: 0.85rem;
 }
 .owned-note {
@@ -502,7 +502,7 @@ button {
   margin: 6px 0;
   padding-left: 10px;
   border-left: 3px solid var(--line);
-  color: var(--muted);
+  color: var(--legacy-muted);
 }
 .status-actions {
   display: flex;
