@@ -1,13 +1,28 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
-import { insertActivity, insertMediaItem, listMedia, upsertEntryStatus } from "@/db/queries";
+import {
+  insertActivity,
+  insertMediaItem,
+  listMedia,
+  setEntryTags,
+  upsertEntryStatus,
+} from "@/db/queries";
 import { actionForStatus, detailForStatus } from "@/lib/activity";
+import { recordNewlyUnlocked } from "@/lib/achievements-service";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { badRequest, serverError, unauthorized } from "@/lib/api/responses";
 import { parseTypeFilter, validateCustomMedia } from "@/lib/api/validation";
-import type { ApiError, MediaCreateResponse, MediaListResponse } from "@/lib/types";
+import type { ApiError, MediaCreateResponse, MediaItemMetadata, MediaListResponse } from "@/lib/types";
 
 export const runtime = "nodejs";
+
+/** Derive a total-units value from metadata where the type defines one. */
+function totalUnitsFor(metadata: MediaItemMetadata | null): number | null {
+  if (!metadata) return null;
+  if (metadata.kind === "ebook") return metadata.pages ?? null;
+  if (metadata.kind === "podcast") return metadata.episodeCount ?? null;
+  return null;
+}
 
 const COVER_THEMES = ["teal", "gold", "coral", "green", "violet", "navy", "crimson"];
 
@@ -43,16 +58,20 @@ export async function POST(request: Request): Promise<NextResponse<MediaCreateRe
   if (!input) return badRequest("Title, creator, genre, and a valid shelf are required.");
 
   try {
-    // Create the media item, the user's library entry, and the activity atomically.
-    const result = await getDb().transaction(async (tx) => {
+    const db = getDb();
+    // Create the media item, the user's library entry, its tags, and the
+    // activity atomically.
+    const result = await db.transaction(async (tx) => {
       const item = await insertMediaItem(tx, {
-        type: "ebook",
+        type: input.type,
         title: input.title,
         creator: input.creator,
         genre: input.genre,
         language: input.language,
-        description: input.description || "A custom e-book added to this account.",
+        description: input.description || "A custom item added to this account.",
         coverTheme: pickCoverTheme(`${input.title}-${input.creator}`),
+        metadata: input.metadata,
+        totalUnits: totalUnitsFor(input.metadata),
       });
       const entry = await upsertEntryStatus(tx, {
         userId: user.id,
@@ -60,6 +79,9 @@ export async function POST(request: Request): Promise<NextResponse<MediaCreateRe
         status: input.status,
         updatedAt: new Date(),
       });
+      if (input.tags.length > 0) {
+        await setEntryTags(tx, { entryId: entry.id, userId: user.id, tags: input.tags });
+      }
       await insertActivity(tx, {
         userId: user.id,
         mediaItemId: item.id,
@@ -69,6 +91,13 @@ export async function POST(request: Request): Promise<NextResponse<MediaCreateRe
       });
       return { item, entry };
     });
+
+    // Best-effort unlock bookkeeping (e.g. first finish); never fail the write.
+    try {
+      await recordNewlyUnlocked(db, user.id, new Date());
+    } catch (error) {
+      console.error("achievement unlock recording failed:", error);
+    }
     return NextResponse.json(result, { status: 201 });
   } catch {
     return serverError();

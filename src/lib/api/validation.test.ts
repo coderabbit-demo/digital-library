@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   parseTypeFilter,
   validateCustomMedia,
+  validateGoal,
   validateLibraryUpsert,
   validateProfileUpdate,
+  validateProgress,
   validateReview,
+  validateTags,
 } from "./validation";
 
 describe("API request validation (DL-26)", () => {
@@ -67,5 +70,49 @@ describe("API request validation (DL-26)", () => {
     expect(result?.language).toBe("English");
     expect(validateCustomMedia({ title: "", creator: "C", genre: "G", status: "wishlist" })).toBeNull();
     expect(validateCustomMedia({ title: "T", creator: "C", genre: "G", status: "x" })).toBeNull();
+  });
+});
+
+describe("v2 request validation (DL-44)", () => {
+  it("defaults custom media type to ebook and captures type/metadata/tags", () => {
+    const ebook = validateCustomMedia({ title: "T", creator: "C", genre: "G", status: "wishlist" });
+    expect(ebook?.type).toBe("ebook");
+    expect(ebook?.tags).toEqual([]);
+
+    const music = validateCustomMedia({
+      type: "music",
+      title: "Blue",
+      creator: "Joni",
+      genre: "Folk",
+      status: "current",
+      metadata: { album: "Blue" },
+      tags: ["Folk", "folk", " calm "],
+    });
+    expect(music?.type).toBe("music");
+    expect(music?.metadata).toEqual({ kind: "music", album: "Blue" });
+    expect(music?.tags).toEqual(["folk", "calm"]);
+  });
+
+  it("validates tags input", () => {
+    expect(validateTags({ entryId: "e-1", tags: ["A", "a"] })).toEqual({ entryId: "e-1", tags: ["a"] });
+    expect(validateTags({ entryId: "", tags: [] })).toBeNull();
+  });
+
+  it("validates progress as a non-negative integer", () => {
+    expect(validateProgress({ entryId: "e-1", progress: 120 })).toEqual({ entryId: "e-1", progress: 120 });
+    expect(validateProgress({ entryId: "e-1", progress: -1 })).toBeNull();
+    expect(validateProgress({ entryId: "e-1", progress: 1.5 })).toBeNull();
+    expect(validateProgress({ entryId: "", progress: 1 })).toBeNull();
+  });
+
+  it("validates a goal target and defaults the period", () => {
+    expect(validateGoal({ targetCount: 24 })).toEqual({ period: "year", periodKey: null, targetCount: 24 });
+    expect(validateGoal({ targetCount: 12, period: "year", periodKey: "2026" })).toEqual({
+      period: "year",
+      periodKey: "2026",
+      targetCount: 12,
+    });
+    expect(validateGoal({ targetCount: 0 })).toBeNull();
+    expect(validateGoal({ targetCount: 2.5 })).toBeNull();
   });
 });

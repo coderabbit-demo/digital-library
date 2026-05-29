@@ -3,7 +3,17 @@
  * so request/response payloads are checked at compile time (Req 8.5).
  * Endpoint implementations land in DL-20 / DL-22..DL-26.
  */
-import type { LibraryEntry, LibraryStatus, MediaItem, MediaType, Preferences, User } from "./domain";
+import type {
+  Goal,
+  LibraryEntry,
+  LibraryStatus,
+  MediaItem,
+  MediaItemMetadata,
+  MediaType,
+  Preferences,
+  User,
+} from "./domain";
+import type { GoalProgress } from "@/lib/goals";
 
 /** Discriminated result envelope returned by client API helpers. */
 export type ApiResult<T> =
@@ -69,6 +79,36 @@ export interface CustomMediaRequest {
   language: string;
   description: string;
   status: LibraryStatus;
+  /** Optional and back-compatible; defaults to "ebook" when omitted (Req 1.2). */
+  type?: string;
+  metadata?: MediaItemMetadata | null;
+  tags?: string[];
+}
+
+export interface TagsRequest {
+  entryId: string;
+  tags: string[];
+}
+
+export interface TagsResponse {
+  entryId: string;
+  tags: string[];
+}
+
+export interface ProgressRequest {
+  entryId: string;
+  progress: number;
+}
+
+export interface GoalUpsertRequest {
+  period?: string;
+  periodKey?: string;
+  targetCount: number;
+}
+
+export interface GoalResponse {
+  goal: Goal | null;
+  progress: GoalProgress | null;
 }
 
 export interface AuthResponse {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
 import { findEntry, findMediaById, insertActivity, upsertEntryStatus } from "@/db/queries";
 import { actionForStatus, detailForStatus } from "@/lib/activity";
+import { recordNewlyUnlocked } from "@/lib/achievements-service";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { apiError, badRequest, serverError, unauthorized } from "@/lib/api/responses";
 import { validateLibraryUpsert } from "@/lib/api/validation";
@@ -45,6 +46,13 @@ export async function POST(request: Request): Promise<NextResponse<LibraryEntryR
       });
       return saved;
     });
+
+    // Best-effort: moving to a shelf (e.g. finishing) may unlock achievements.
+    try {
+      await recordNewlyUnlocked(db, user.id, new Date());
+    } catch (error) {
+      console.error("achievement unlock recording failed:", error);
+    }
     return NextResponse.json({ entry });
   } catch {
     return serverError();
