@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
 import { listFeed } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
-import { unauthorized } from "@/lib/api/responses";
+import { serverError, unauthorized } from "@/lib/api/responses";
+import { parseTypeFilter } from "@/lib/api/validation";
 import type { ActivitiesResponse, ApiError } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -11,7 +12,11 @@ export async function GET(request: Request): Promise<NextResponse<ActivitiesResp
   const user = await getSessionUser();
   if (!user) return unauthorized();
 
-  const type = new URL(request.url).searchParams.get("type");
-  const entries = await listFeed(getDb(), type && type !== "all" ? { type } : {});
-  return NextResponse.json({ entries });
+  const type = parseTypeFilter(new URL(request.url).searchParams.get("type"));
+  try {
+    const entries = await listFeed(getDb(), type ? { type } : {});
+    return NextResponse.json({ entries });
+  } catch {
+    return serverError();
+  }
 }

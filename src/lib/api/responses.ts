@@ -16,3 +16,7 @@ export function unauthorized(): NextResponse<ApiError> {
 export function badRequest(message: string): NextResponse<ApiError> {
   return apiError(400, message);
 }
+
+export function serverError(): NextResponse<ApiError> {
+  return apiError(500, "Something went wrong. Please try again.");
+}

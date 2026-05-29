@@ -12,6 +12,20 @@ function asString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+const MAX_TYPE_LENGTH = 64;
+
+/**
+ * Normalize a `?type=` filter at the boundary. Missing/empty/"all" means "no
+ * filter"; otherwise the trimmed value is used. Media types are an open,
+ * data-driven set (Req 5.2/6.2), so we do not allowlist values — an unknown
+ * type simply yields an empty result. Absurdly long values are ignored.
+ */
+export function parseTypeFilter(raw: string | null | undefined): string | undefined {
+  const value = (raw ?? "").trim();
+  if (!value || value === "all" || value.length > MAX_TYPE_LENGTH) return undefined;
+  return value;
+}
+
 export interface ProfileUpdate {
   name: string;
   email: string;
@@ -33,7 +47,7 @@ export interface LibraryUpsert {
 export function validateLibraryUpsert(body: unknown): LibraryUpsert | null {
   const b = asObject(body);
   const mediaItemId = asString(b.mediaItemId).trim();
-  const status = asString(b.status);
+  const status = asString(b.status).trim();
   if (!mediaItemId || !isLibraryStatus(status)) return null;
   return { mediaItemId, status };
 }
@@ -64,7 +78,7 @@ export function validateCustomMedia(body: unknown): CustomMedia | null {
   const title = asString(b.title).trim();
   const creator = asString(b.creator).trim();
   const genre = asString(b.genre).trim();
-  const status = asString(b.status);
+  const status = asString(b.status).trim();
   if (!title || !creator || !genre || !isLibraryStatus(status)) return null;
   return {
     title,

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  parseTypeFilter,
   validateCustomMedia,
   validateLibraryUpsert,
   validateProfileUpdate,
@@ -40,6 +41,20 @@ describe("API request validation (DL-26)", () => {
     expect(validateReview({ entryId: "e-1", rating: 6 })).toBeNull();
     expect(validateReview({ entryId: "e-1", rating: 3.5 })).toBeNull();
     expect(validateReview({ entryId: "", rating: 3 })).toBeNull();
+  });
+
+  it("parses the type filter (missing/all/blank => no filter; trims; bounds length)", () => {
+    expect(parseTypeFilter(null)).toBeUndefined();
+    expect(parseTypeFilter("all")).toBeUndefined();
+    expect(parseTypeFilter("  ")).toBeUndefined();
+    expect(parseTypeFilter(" ebook ")).toBe("ebook");
+    expect(parseTypeFilter("x".repeat(100))).toBeUndefined();
+  });
+
+  it("trims status before validating", () => {
+    expect(validateLibraryUpsert({ mediaItemId: "m-1", status: " finished " })?.status).toBe(
+      "finished",
+    );
   });
 
   it("validates custom media and defaults language to English", () => {

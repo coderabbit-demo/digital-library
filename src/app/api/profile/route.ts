@@ -3,7 +3,7 @@ import { getDb } from "@/db/client";
 import { isUniqueViolation } from "@/db/errors";
 import { findPreferences, updateUserProfile, upsertPreferences } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
-import { apiError, badRequest, unauthorized } from "@/lib/api/responses";
+import { apiError, badRequest, serverError, unauthorized } from "@/lib/api/responses";
 import { validateProfileUpdate } from "@/lib/api/validation";
 import { emptyPreferences } from "@/lib/preferences";
 import type { ApiError, ProfileResponse } from "@/lib/types";
@@ -30,20 +30,22 @@ export async function PUT(request: Request): Promise<NextResponse<ProfileRespons
   const input = validateProfileUpdate(body);
   if (!input) return badRequest("Name and email are required.");
 
-  const db = getDb();
-  let updated;
   try {
-    updated = await updateUserProfile(db, user.id, {
-      name: input.name,
-      email: input.email,
-      bio: input.bio,
+    // Persist the profile and preferences atomically.
+    const result = await getDb().transaction(async (tx) => {
+      const updated = await updateUserProfile(tx, user.id, {
+        name: input.name,
+        email: input.email,
+        bio: input.bio,
+      });
+      if (!updated) return null;
+      const preferences = await upsertPreferences(tx, user.id, input.preferences);
+      return { user: updated, preferences };
     });
+    if (!result) return apiError(404, "User not found.");
+    return NextResponse.json(result);
   } catch (error) {
     if (isUniqueViolation(error)) return apiError(409, "That email is already registered.");
-    throw error;
+    return serverError();
   }
-  if (!updated) return apiError(404, "User not found.");
-
-  const preferences = await upsertPreferences(db, user.id, input.preferences);
-  return NextResponse.json({ user: updated, preferences });
 }
