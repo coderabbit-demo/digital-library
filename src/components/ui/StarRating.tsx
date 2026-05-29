@@ -11,6 +11,7 @@ export interface StarRatingProps {
 export function StarRating({ rating, className }: StarRatingProps): React.JSX.Element {
   return (
     <span
+      role="img"
       className={cn("inline-flex items-center gap-0.5 text-amber-500", className)}
       aria-label={`Rated ${rating} out of 5`}
     >
