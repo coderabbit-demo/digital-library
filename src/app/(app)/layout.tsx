@@ -18,9 +18,11 @@ export default async function AppLayout({
   if (!user) redirect("/login");
 
   return (
-    <div className="app-shell">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <AppNav userName={user.name} avatarColor={user.avatarColor} />
-      <main>{children}</main>
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6">
+        {children}
+      </main>
     </div>
   );
 }
