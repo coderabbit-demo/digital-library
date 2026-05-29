@@ -50,19 +50,19 @@
   - _Requirements: 12.1, 12.2, 12.5_
 
 - [ ] 4. Authentication, sessions, and authorization
-- [ ] 4.1 Implement credential and session services
+- [x] 4.1 Implement credential and session services
   - Hash passwords with bcrypt stored in the auth-identities record, never in plaintext
   - Create server-side session records keyed by a hashed opaque token, verify sessions, and revoke them on sign-out
   - Structure credential lookups by provider so a future Google identity reuses the same session machinery
   - _Requirements: 9.1, 9.3, 9.5, 9.8_
 
-- [ ] 4.2 Build registration, login, and logout endpoints
+- [x] 4.2 Build registration, login, and logout endpoints
   - Register a new member with name, email, password; reject duplicate emails without creating an account
   - Verify login credentials against the stored hash and issue an HTTP-only session cookie; clear and revoke it on logout
   - Use generic messaging that avoids account enumeration
   - _Requirements: 9.1, 9.2, 9.6, 8.1_
 
-- [ ] 4.3 Enforce route and endpoint protection and per-user authorization
+- [x] 4.3 Enforce route and endpoint protection and per-user authorization
   - Gate signed-in routes and data endpoints, redirecting or rejecting unauthenticated requests
   - Derive the acting user only from the verified session, never from request input, and restrict reads/writes to the user's own records
   - _Requirements: 9.4, 9.7, 8.4_
