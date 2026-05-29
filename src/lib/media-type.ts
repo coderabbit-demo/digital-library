@@ -9,6 +9,9 @@ import type { MediaItem, MediaTypeOption } from "@/lib/types";
 
 export const MEDIA_TYPE_LABELS: Record<string, string> = {
   ebook: "Books",
+  music: "Music",
+  podcast: "Podcasts",
+  tv_movie: "TV & Movies",
 };
 
 function humanize(value: string): string {
