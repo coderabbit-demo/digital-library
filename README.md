@@ -73,7 +73,9 @@ Built with **Next.js (App Router) + React + TypeScript**, **PostgreSQL** via **D
 
 ## Deployment (Vercel)
 
-Set `DATABASE_URL` (managed Postgres, e.g. Vercel Postgres / Neon) and `AUTH_SECRET` as project environment variables. Migrations are applied as part of the release process.
+Set `DATABASE_URL` (managed Postgres, e.g. Vercel Postgres / Neon) and `AUTH_SECRET` as project environment variables.
+
+Database migrations are applied automatically on every deploy: [`vercel.json`](vercel.json) sets the build command to `npm run db:migrate && npm run build`, so the schema is brought up to date (against the build-time `DATABASE_URL`) before the app is built.
 
 ## Specs
 
