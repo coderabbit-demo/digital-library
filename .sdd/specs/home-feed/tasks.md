@@ -141,6 +141,6 @@
   - Cover media-type label/option derivation (including a non-ebook type), feed selection (ordering, omission, filtering, empty), password hashing/verification, session verification and revocation, duplicate-email rejection, add-to-shelf producing an owned activity, and cross-user authorization denial
   - _Requirements: 5.2, 5.3, 4.4, 4.6, 9.1, 9.2, 9.5, 9.6, 9.7, 7.4_
 
-- [ ]* 9.3 Add end-to-end navigation and auth-flow coverage
+- [ ] 9.3 Add end-to-end navigation and auth-flow coverage (optional)
   - Verify deep-load/refresh of each route renders without 404, unauthenticated access redirects to the auth surface, back/forward navigates between pages, and a signed-in add-to-shelf appears in the Home feed
   - _Requirements: 2.5, 2.6, 2.8, 4.5_
