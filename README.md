@@ -20,10 +20,10 @@ Built with **Next.js (App Router) + React + TypeScript**, **PostgreSQL** via **D
 2. **Configure environment** — copy the example and fill in values:
 
    ```sh
-   cp .env.example .env.local
+   cp .env.example .env
    ```
 
-   Required variables — validated at startup; the app fails fast if missing:
+   Use `.env` (Docker Compose and the `db:*` scripts both read it; Next.js reads it too). Required variables — validated at startup; the app fails fast if missing:
 
    | Variable | Purpose |
    |----------|---------|
@@ -37,6 +37,8 @@ Built with **Next.js (App Router) + React + TypeScript**, **PostgreSQL** via **D
    | `NYT_API_KEY` | NYT Best Seller API key; required only by the recommendations feature, which validates it on use |
 
    `POSTGRES_*` values are read by Docker Compose for the local database.
+
+   > **Port conflict?** If you already run Postgres on `5432`, set `POSTGRES_PORT=5433` and point `DATABASE_URL` at `...@localhost:5433/...` (both are read from `.env`).
 
 3. **Start the database** (data persists in a Docker volume):
 
