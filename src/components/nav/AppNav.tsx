@@ -69,6 +69,7 @@ export function AppNav({ userName, avatarColor }: AppNavProps): React.JSX.Elemen
           </Button>
           <Link
             href="/profile"
+            aria-label={`${userName} — profile and account`}
             className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <span
