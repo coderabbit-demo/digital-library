@@ -2,6 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { sendJson } from "@/lib/api/client";
 import { joinList, splitList } from "@/lib/preferences-format";
 import type { Preferences, User } from "@/lib/types";
@@ -15,7 +20,25 @@ function field(data: FormData, name: string): string[] {
   return splitList(String(data.get(name) ?? ""));
 }
 
-/** Edit profile + media preferences via the profile API (DL-34). */
+function TextField({
+  name,
+  label,
+  defaultValue,
+  ...rest
+}: {
+  name: string;
+  label: string;
+  defaultValue?: string;
+} & React.ComponentProps<typeof Input>): React.JSX.Element {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={name}>{label}</Label>
+      <Input id={name} name={name} defaultValue={defaultValue} {...rest} />
+    </div>
+  );
+}
+
+/** Edit profile + media preferences via the profile API (DL-34; restyled DL-49). */
 export function ProfileForm({ user, preferences }: ProfileFormProps): React.JSX.Element {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -66,73 +89,54 @@ export function ProfileForm({ user, preferences }: ProfileFormProps): React.JSX.
   }
 
   return (
-    <form className="profile-form" onSubmit={onSubmit}>
-      <label>
-        Name
-        <input name="name" type="text" required defaultValue={user.name} autoComplete="name" />
-      </label>
-      <label>
-        Email
-        <input name="email" type="email" required defaultValue={user.email ?? ""} autoComplete="email" />
-      </label>
-      <label>
-        Bio
-        <textarea name="bio" rows={3} defaultValue={user.bio} />
-      </label>
+    <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <TextField name="name" label="Name" defaultValue={user.name} required autoComplete="name" />
+          <TextField
+            name="email"
+            label="Email"
+            type="email"
+            defaultValue={user.email ?? ""}
+            required
+            autoComplete="email"
+          />
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea id="bio" name="bio" rows={3} defaultValue={user.bio} />
+          </div>
+        </CardContent>
+      </Card>
 
-      <fieldset>
-        <legend>Books</legend>
-        <label>
-          Favorite authors
-          <input name="bookAuthors" type="text" defaultValue={joinList(preferences.books.favoriteAuthors)} />
-        </label>
-        <label>
-          Favorite genres
-          <input name="bookGenres" type="text" defaultValue={joinList(preferences.books.favoriteGenres)} />
-        </label>
-        <label>
-          Languages
-          <input name="bookLanguages" type="text" defaultValue={joinList(preferences.books.languages)} />
-        </label>
-      </fieldset>
+      <Card>
+        <CardHeader>
+          <CardTitle>Preferences</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <TextField name="bookAuthors" label="Favorite authors" defaultValue={joinList(preferences.books.favoriteAuthors)} />
+          <TextField name="bookGenres" label="Favorite book genres" defaultValue={joinList(preferences.books.favoriteGenres)} />
+          <TextField name="bookLanguages" label="Languages" defaultValue={joinList(preferences.books.languages)} />
+          <TextField name="musicArtists" label="Favorite artists" defaultValue={joinList(preferences.music.favoriteArtists)} />
+          <TextField name="musicGenres" label="Favorite music genres" defaultValue={joinList(preferences.music.favoriteGenres)} />
+          <TextField name="podcastTopics" label="Podcast topics" defaultValue={joinList(preferences.podcasts.topics)} />
+          <TextField name="streamingGenres" label="TV & movie genres" defaultValue={joinList(preferences.streaming.favoriteGenres)} />
+        </CardContent>
+      </Card>
 
-      <fieldset>
-        <legend>Music</legend>
-        <label>
-          Favorite artists
-          <input name="musicArtists" type="text" defaultValue={joinList(preferences.music.favoriteArtists)} />
-        </label>
-        <label>
-          Favorite genres
-          <input name="musicGenres" type="text" defaultValue={joinList(preferences.music.favoriteGenres)} />
-        </label>
-      </fieldset>
-
-      <fieldset>
-        <legend>Podcasts</legend>
-        <label>
-          Topics
-          <input name="podcastTopics" type="text" defaultValue={joinList(preferences.podcasts.topics)} />
-        </label>
-      </fieldset>
-
-      <fieldset>
-        <legend>TV and movies</legend>
-        <label>
-          Favorite genres
-          <input name="streamingGenres" type="text" defaultValue={joinList(preferences.streaming.favoriteGenres)} />
-        </label>
-      </fieldset>
-
-      {error ? (
-        <span role="alert" className="form-error">
-          {error}
-        </span>
-      ) : null}
-      {message ? <span className="form-message">{message}</span> : null}
-      <button className="primary-button" type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save profile"}
-      </button>
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Saving…" : "Save profile"}
+        </Button>
+        {error ? (
+          <span role="alert" className="text-sm text-destructive">
+            {error}
+          </span>
+        ) : null}
+        {message ? <span className="text-sm text-muted-foreground">{message}</span> : null}
+      </div>
     </form>
   );
 }

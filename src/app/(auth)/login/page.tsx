@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { appConfig } from "@/lib/app-config";
 
 export default function LoginPage(): React.JSX.Element {
   const router = useRouter();
@@ -35,25 +40,39 @@ export default function LoginPage(): React.JSX.Element {
   }
 
   return (
-    <main>
-      <h1>Sign in</h1>
-      <form onSubmit={onSubmit}>
-        <label>
-          Email
-          <input name="email" type="email" required autoComplete="email" />
-        </label>
-        <label>
-          Password
-          <input name="password" type="password" required autoComplete="current-password" />
-        </label>
-        {error ? <p role="alert">{error}</p> : null}
-        <button type="submit" disabled={pending}>
-          {pending ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
-      <p>
-        No account? <Link href="/register">Create one</Link>
-      </p>
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <p className="text-sm text-muted-foreground">{appConfig.name}</p>
+          <CardTitle className="text-2xl">Sign in</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" required autoComplete="email" />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" name="password" type="password" required autoComplete="current-password" />
+            </div>
+            {error ? (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            ) : null}
+            <Button type="submit" disabled={pending}>
+              {pending ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+          <p className="mt-4 text-sm text-muted-foreground">
+            No account?{" "}
+            <Link href="/register" className="font-medium text-foreground underline-offset-4 hover:underline">
+              Create one
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </main>
   );
 }
