@@ -102,18 +102,18 @@
   - _Requirements: 2.2, 2.3, 2.4, 2.5, 2.8, 13.3, 13.5_
 
 - [ ] 7. Home page: hero, stats panel, and filterable feed
-- [ ] 7.1 Compose the Home page with hero and stats panel
+- [x] 7.1 Compose the Home page with hero and stats panel
   - Render Home at the root for authenticated users with a hero above the rest of the content
   - Display a hero backdrop that degrades gracefully when the image is unavailable, a name-aware greeting, and an optional call-to-action that navigates to another route
   - Render a stats panel of reader counters/reading stats backed by mock values, structured for a future Goals build-out
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9_
 
-- [ ] 7.2 Render the community feed below the hero and stats
+- [x] 7.2 Render the community feed below the hero and stats
   - Show activity entries with actor name, avatar, action detail, media title, and a locale-aware timestamp, newest first
   - Reflect newly recorded activity after data refreshes and show an empty state when nothing matches
   - _Requirements: 4.1, 4.3, 4.5, 4.7, 13.4_
 
-- [ ] 7.3 Implement the data-derived media-type filter
+- [x] 7.3 Implement the data-derived media-type filter
   - Offer an All option plus options derived from the media types present in the data, defaulting to All and indicating the active option accessibly
   - Filter the feed by the selected type, derive a human-readable label with a sensible fallback for unmapped types, and preserve the selection across a refresh
   - Confirm the filter and feed work unchanged when non-`ebook` media types are present
