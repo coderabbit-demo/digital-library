@@ -9,12 +9,12 @@
   - Provide scripts to type-check, build, and run, with the build failing on type errors
   - _Requirements: 1.1, 1.2, 1.5_
 
-- [ ] 1.2 (P) Define shared domain and API contract types
+- [x] 1.2 (P) Define shared domain and API contract types
   - Model users (with member/community kind), auth identities, sessions, media items, library entries, activities, and nested preferences as shared types
   - Express request/response payload types intended for reuse by both server and client
   - _Requirements: 1.3, 1.4, 8.5_
 
-- [ ] 1.3 (P) Port the existing visual language into the front-end
+- [x] 1.3 (P) Port the existing visual language into the front-end
   - Bring over the prototype's brand mark, avatars, pills, typography, cover themes, and color tokens as the starting styles
   - Establish a component-based UI structure so the layer can be re-skinned later without touching data or routing logic
   - _Requirements: 1.6, 13.2_

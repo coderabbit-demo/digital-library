@@ -9,10 +9,9 @@ describe("scaffold (DL-11)", () => {
     expect(appConfig.tagline).toBeTypeOf("string");
   });
 
-  it("renders the app name as the home page heading", () => {
+  it("renders the brand mark with the app name on the home page", () => {
     render(<HomePage />);
-    expect(
-      screen.getByRole("heading", { level: 1, name: appConfig.name }),
-    ).toBeInTheDocument();
+    expect(screen.getByText("LL")).toBeInTheDocument();
+    expect(screen.getByText(appConfig.name)).toBeInTheDocument();
   });
 });
