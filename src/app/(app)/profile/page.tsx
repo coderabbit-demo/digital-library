@@ -1,12 +1,20 @@
-/**
- * Profile route shell (DL-27). Editable profile fields and media preferences
- * are built in Story DL-8 (DL-34).
- */
-export default function ProfilePage(): React.JSX.Element {
+import { redirect } from "next/navigation";
+import { ProfileForm } from "@/components/profile/ProfileForm";
+import { getDb } from "@/db/client";
+import { findPreferences } from "@/db/queries";
+import { getSessionUser } from "@/lib/auth/current-user";
+import { emptyPreferences } from "@/lib/preferences";
+
+export default async function ProfilePage(): Promise<React.JSX.Element> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
+
+  const preferences = (await findPreferences(getDb(), user.id)) ?? emptyPreferences();
+
   return (
     <section aria-labelledby="profile-title">
       <h1 id="profile-title">Profile</h1>
-      <p>Edit your profile and media preferences here.</p>
+      <ProfileForm user={user} preferences={preferences} />
     </section>
   );
 }

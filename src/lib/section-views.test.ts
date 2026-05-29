@@ -1,0 +1,58 @@
+import { describe, expect, it } from "vitest";
+import type { LibraryEntry, MediaItem } from "@/lib/types";
+import { composeShelfItems, filterShelfItems, resolveShelf } from "./library-view";
+import { distinctGenres, filterByGenre, resolveGenre } from "./catalog-view";
+import { joinList, splitList } from "./preferences-format";
+
+const media = (id: string, genre = "Science Fiction"): MediaItem => ({
+  id,
+  type: "ebook",
+  title: id,
+  creator: "c",
+  genre,
+  language: "English",
+  description: "",
+  coverTheme: "teal",
+});
+const entry = (mediaItemId: string, status: LibraryEntry["status"]): LibraryEntry => ({
+  id: `le-${mediaItemId}`,
+  userId: "u",
+  mediaItemId,
+  status,
+  rating: null,
+  review: "",
+  updatedAt: "2026-05-29T00:00:00.000Z",
+});
+
+describe("shelves view (DL-32)", () => {
+  it("composes entries with media and drops unresolved ones", () => {
+    const items = composeShelfItems([entry("a", "wishlist"), entry("missing", "current")], [media("a")]);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.item.id).toBe("a");
+  });
+
+  it("filters by shelf and resolves unknown shelves to all", () => {
+    const items = composeShelfItems([entry("a", "wishlist"), entry("b", "finished")], [media("a"), media("b")]);
+    expect(filterShelfItems(items, "finished")).toHaveLength(1);
+    expect(filterShelfItems(items, "all")).toHaveLength(2);
+    expect(resolveShelf("nope")).toBe("all");
+    expect(resolveShelf("finished")).toBe("finished");
+  });
+});
+
+describe("catalog view (DL-33)", () => {
+  it("derives sorted distinct genres and filters by genre", () => {
+    const items = [media("a", "Memoir"), media("b", "Science Fiction"), media("c", "Memoir")];
+    expect(distinctGenres(items)).toEqual(["Memoir", "Science Fiction"]);
+    expect(filterByGenre(items, "Memoir")).toHaveLength(2);
+    expect(resolveGenre("Memoir", ["Memoir"])).toBe("Memoir");
+    expect(resolveGenre("Unknown", ["Memoir"])).toBe("all");
+  });
+});
+
+describe("preferences formatting (DL-34)", () => {
+  it("splits and joins comma-separated lists", () => {
+    expect(splitList("Le Guin,  Kuang , ,Weir")).toEqual(["Le Guin", "Kuang", "Weir"]);
+    expect(joinList(["Jazz", "Ambient"])).toBe("Jazz, Ambient");
+  });
+});
