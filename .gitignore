@@ -26,3 +26,15 @@ next-env.d.ts
 
 # test coverage
 /coverage
+.claude/settings.json
+.claude/commands/sdd/spec-design.md
+.claude/commands/sdd/spec-impl.md
+.claude/commands/sdd/spec-init.md
+.claude/commands/sdd/spec-requirements.md
+.claude/commands/sdd/spec-status.md
+.claude/commands/sdd/spec-tasks.md
+.claude/commands/sdd/steering-custom.md
+.claude/commands/sdd/steering.md
+.claude/commands/sdd/validate-design.md
+.claude/commands/sdd/validate-gap.md
+.claude/commands/sdd/validate-impl.md
