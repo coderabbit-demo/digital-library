@@ -7,11 +7,28 @@
  * is created lazily so importing the data-access layer never requires a live
  * database (full env validation arrives in DL-18).
  */
-import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
+import type { PgDatabase } from "drizzle-orm/pg-core";
+import {
+  drizzle,
+  type PostgresJsDatabase,
+  type PostgresJsQueryResultHKT,
+} from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
 
 export type Db = PostgresJsDatabase<typeof schema>;
+
+/**
+ * The shared base of the database client and a transaction handle, so the
+ * data-access helpers accept either — letting callers compose multiple writes
+ * inside `db.transaction(async (tx) => …)` atomically.
+ */
+export type DbExecutor = PgDatabase<
+  PostgresJsQueryResultHKT,
+  typeof schema,
+  ExtractTablesWithRelations<typeof schema>
+>;
 
 /** Throws if the connection string is absent (mini fail-fast; see DL-18). */
 export function requireDatabaseUrl(env: Record<string, string | undefined> = process.env): string {

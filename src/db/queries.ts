@@ -19,7 +19,7 @@ import type {
   Preferences,
   User,
 } from "@/lib/types";
-import type { Db } from "./client";
+import type { DbExecutor } from "./client";
 import {
   toActivity,
   toFeedEntry,
@@ -48,12 +48,12 @@ export function normalizeEmail<T extends string | null | undefined>(email: T): T
 
 /* ----------------------------- users & auth ----------------------------- */
 
-export async function findUserById(db: Db, id: string): Promise<User | null> {
+export async function findUserById(db: DbExecutor, id: string): Promise<User | null> {
   const [row] = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return row ? toUser(row) : null;
 }
 
-export async function findUserByEmail(db: Db, email: string): Promise<User | null> {
+export async function findUserByEmail(db: DbExecutor, email: string): Promise<User | null> {
   const [row] = await db
     .select()
     .from(users)
@@ -62,7 +62,7 @@ export async function findUserByEmail(db: Db, email: string): Promise<User | nul
   return row ? toUser(row) : null;
 }
 
-export async function insertUser(db: Db, input: NewUserRow): Promise<User> {
+export async function insertUser(db: DbExecutor, input: NewUserRow): Promise<User> {
   const [row] = await db
     .insert(users)
     .values({ ...input, email: normalizeEmail(input.email) })
@@ -71,8 +71,7 @@ export async function insertUser(db: Db, input: NewUserRow): Promise<User> {
   return toUser(row);
 }
 
-export async function updateUserProfile(
-  db: Db,
+export async function updateUserProfile(db: DbExecutor,
   userId: string,
   patch: { name: string; email: string | null; bio: string },
 ): Promise<User | null> {
@@ -85,8 +84,7 @@ export async function updateUserProfile(
 }
 
 /** Look up a password login by email, returning the user and stored hash. */
-export async function findPasswordCredential(
-  db: Db,
+export async function findPasswordCredential(db: DbExecutor,
   email: string,
 ): Promise<{ user: User; passwordHash: string } | null> {
   const [row] = await db
@@ -99,8 +97,7 @@ export async function findPasswordCredential(
   return { user: toUser(row.user), passwordHash: row.passwordHash };
 }
 
-export async function insertPasswordIdentity(
-  db: Db,
+export async function insertPasswordIdentity(db: DbExecutor,
   userId: string,
   passwordHash: string,
 ): Promise<void> {
@@ -109,15 +106,13 @@ export async function insertPasswordIdentity(
 
 /* -------------------------------- sessions ------------------------------- */
 
-export async function insertSession(
-  db: Db,
+export async function insertSession(db: DbExecutor,
   input: { userId: string; tokenHash: string; expiresAt: Date },
 ): Promise<void> {
   await db.insert(sessions).values(input);
 }
 
-export async function findSessionByTokenHash(
-  db: Db,
+export async function findSessionByTokenHash(db: DbExecutor,
   tokenHash: string,
 ): Promise<{ userId: string; expiresAt: Date } | null> {
   const [row] = await db
@@ -128,13 +123,13 @@ export async function findSessionByTokenHash(
   return row ?? null;
 }
 
-export async function deleteSessionByTokenHash(db: Db, tokenHash: string): Promise<void> {
+export async function deleteSessionByTokenHash(db: DbExecutor, tokenHash: string): Promise<void> {
   await db.delete(sessions).where(eq(sessions.tokenHash, tokenHash));
 }
 
 /* --------------------------------- media --------------------------------- */
 
-export async function listMedia(db: Db, type?: MediaType): Promise<MediaItem[]> {
+export async function listMedia(db: DbExecutor, type?: MediaType): Promise<MediaItem[]> {
   const rows = await db
     .select()
     .from(mediaItems)
@@ -142,8 +137,12 @@ export async function listMedia(db: Db, type?: MediaType): Promise<MediaItem[]> 
   return rows.map(toMediaItem);
 }
 
-export async function findMediaByTitleCreator(
-  db: Db,
+export async function findMediaById(db: DbExecutor, id: string): Promise<MediaItem | null> {
+  const [row] = await db.select().from(mediaItems).where(eq(mediaItems.id, id)).limit(1);
+  return row ? toMediaItem(row) : null;
+}
+
+export async function findMediaByTitleCreator(db: DbExecutor,
   title: string,
   creator: string,
 ): Promise<MediaItem | null> {
@@ -155,8 +154,7 @@ export async function findMediaByTitleCreator(
   return row ? toMediaItem(row) : null;
 }
 
-export async function insertMediaItem(
-  db: Db,
+export async function insertMediaItem(db: DbExecutor,
   input: Omit<MediaItem, "id">,
 ): Promise<MediaItem> {
   const [row] = await db.insert(mediaItems).values(input).returning();
@@ -166,13 +164,12 @@ export async function insertMediaItem(
 
 /* ----------------------------- library entries --------------------------- */
 
-export async function listEntriesForUser(db: Db, userId: string): Promise<LibraryEntry[]> {
+export async function listEntriesForUser(db: DbExecutor, userId: string): Promise<LibraryEntry[]> {
   const rows = await db.select().from(libraryEntries).where(eq(libraryEntries.userId, userId));
   return rows.map(toLibraryEntry);
 }
 
-export async function findEntry(
-  db: Db,
+export async function findEntry(db: DbExecutor,
   userId: string,
   mediaItemId: string,
 ): Promise<LibraryEntry | null> {
@@ -185,8 +182,7 @@ export async function findEntry(
 }
 
 /** Create or move a library entry's shelf for a user (one entry per user+media). */
-export async function upsertEntryStatus(
-  db: Db,
+export async function upsertEntryStatus(db: DbExecutor,
   input: { userId: string; mediaItemId: string; status: LibraryStatus; updatedAt: Date },
 ): Promise<LibraryEntry> {
   const [row] = await db
@@ -201,8 +197,7 @@ export async function upsertEntryStatus(
   return toLibraryEntry(row);
 }
 
-export async function saveReview(
-  db: Db,
+export async function saveReview(db: DbExecutor,
   input: { entryId: string; userId: string; rating: number; review: string; updatedAt: Date },
 ): Promise<LibraryEntry | null> {
   const [row] = await db
@@ -220,8 +215,7 @@ export async function saveReview(
 
 /* -------------------------------- activities ----------------------------- */
 
-export async function insertActivity(
-  db: Db,
+export async function insertActivity(db: DbExecutor,
   input: { userId: string; mediaItemId: string; action: ActivityAction; detail: string; createdAt: Date },
 ): Promise<Activity> {
   const [row] = await db.insert(activities).values(input).returning();
@@ -231,8 +225,7 @@ export async function insertActivity(
 
 /** Community feed: activities joined to actor + media, newest first. The inner
  *  joins drop any activity whose user or media item cannot be resolved (Req 4.6). */
-export async function listFeed(
-  db: Db,
+export async function listFeed(db: DbExecutor,
   opts: { type?: MediaType; limit?: number } = {},
 ): Promise<ReturnType<typeof toFeedEntry>[]> {
   const rows = await db
@@ -248,7 +241,7 @@ export async function listFeed(
 
 /* ------------------------------- preferences ----------------------------- */
 
-export async function findPreferences(db: Db, userId: string): Promise<Preferences | null> {
+export async function findPreferences(db: DbExecutor, userId: string): Promise<Preferences | null> {
   const [row] = await db
     .select()
     .from(preferences)
@@ -257,8 +250,7 @@ export async function findPreferences(db: Db, userId: string): Promise<Preferenc
   return row ? toPreferences(row) : null;
 }
 
-export async function upsertPreferences(
-  db: Db,
+export async function upsertPreferences(db: DbExecutor,
   userId: string,
   prefs: Preferences,
 ): Promise<Preferences> {
