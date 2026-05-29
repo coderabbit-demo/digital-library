@@ -12,17 +12,18 @@ import * as schema from "./schema";
 
 const MIGRATIONS_DIR = join(process.cwd(), "src/db/migrations");
 
-function initialMigrationSql(): string {
-  const file = readdirSync(MIGRATIONS_DIR)
+function migrationsSql(): string {
+  const files = readdirSync(MIGRATIONS_DIR)
     .filter((f) => f.endsWith(".sql"))
-    .sort()[0];
-  if (!file) throw new Error("no migration file found");
+    .sort();
+  if (files.length === 0) throw new Error("no migration files found");
+  // Apply every migration in order so tests match the deployed schema.
   // pglite (PG15) provides gen_random_uuid() in core; the pgcrypto extension is
   // not bundled, so drop that statement for the in-process test database.
-  return readFileSync(join(MIGRATIONS_DIR, file), "utf8").replace(
-    /CREATE EXTENSION IF NOT EXISTS "pgcrypto";/g,
-    "",
-  );
+  return files
+    .map((file) => readFileSync(join(MIGRATIONS_DIR, file), "utf8"))
+    .join("\n")
+    .replace(/CREATE EXTENSION IF NOT EXISTS "pgcrypto";/g, "");
 }
 
 export interface TestDb {
@@ -32,7 +33,7 @@ export interface TestDb {
 
 export async function createTestDb(): Promise<TestDb> {
   const client = new PGlite();
-  await client.exec(initialMigrationSql());
+  await client.exec(migrationsSql());
   // pglite's drizzle instance is structurally compatible with our query layer.
   const db = drizzle(client, { schema }) as unknown as Db;
   return { db, close: () => client.close() };
