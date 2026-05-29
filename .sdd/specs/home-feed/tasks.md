@@ -31,7 +31,7 @@
   - Select a Postgres driver per environment (serverless/HTTP in production, pooled locally) to avoid connection exhaustion
   - _Requirements: 10.6, 8.2_
 
-- [ ] 2.3 Build the database seed routine
+- [x] 2.3 Build the database seed routine
   - Insert the starter catalog as `ebook` media items, the seed community users (no credentials), and a demo member with a hashed-password identity
   - Ensure the app is demonstrable immediately after seeding
   - _Requirements: 10.5, 6.4_
