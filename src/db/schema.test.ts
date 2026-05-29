@@ -51,20 +51,32 @@ describe("postgres schema (DL-14)", () => {
     expect(checks(libraryEntries)).toEqual(
       expect.arrayContaining(["library_entries_status_check", "library_entries_rating_check"]),
     );
-    expect(checks(authIdentities)).toContain("auth_identities_provider_check");
+    expect(checks(authIdentities)).toEqual(
+      expect.arrayContaining(["auth_identities_provider_check", "auth_identities_shape_check"]),
+    );
     expect(checks(activities)).toContain("activities_action_check");
   });
 
-  it("keys preferences one-to-one on user_id", () => {
-    expect(columnNames(preferences)).toContain("user_id");
-    expect(getTableConfig(preferences).foreignKeys).toHaveLength(1);
+  it("enforces one identity per provider per user", () => {
+    const uniques = getTableConfig(authIdentities).uniqueConstraints.map((u) => u.name);
+    expect(uniques).toContain("auth_identities_user_provider_unique");
+  });
+
+  it("keys preferences one-to-one via a primary-key on user_id", () => {
+    const { columns, foreignKeys } = getTableConfig(preferences);
+    const userId = columns.find((c) => c.name === "user_id");
+    expect(userId?.primary).toBe(true); // PK => unique => true 1:1, not just an FK
+    expect(foreignKeys).toHaveLength(1);
   });
 
   it("commits a versioned initial migration with the expected DDL (Req 10.2)", () => {
     const dir = join(process.cwd(), "src/db/migrations");
-    const sqlFiles = readdirSync(dir).filter((f) => f.endsWith(".sql"));
-    expect(sqlFiles.length).toBeGreaterThanOrEqual(1);
-    const sql = sqlFiles.map((f) => readFileSync(join(dir, f), "utf8")).join("\n");
+    const initial = readdirSync(dir)
+      .filter((f) => f.endsWith(".sql"))
+      .sort()[0];
+    expect(initial).toMatch(/^0000_/);
+    const sql = readFileSync(join(dir, initial as string), "utf8");
+    expect(sql).toContain('CREATE EXTENSION IF NOT EXISTS "pgcrypto"');
     expect(sql).toContain('CREATE TABLE "users"');
     expect(sql).toContain("library_entries_rating_check");
     expect(sql).toContain('REFERENCES "public"."users"("id")');

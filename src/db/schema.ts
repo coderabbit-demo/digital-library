@@ -54,7 +54,19 @@ export const authIdentities = pgTable(
   },
   (t) => [
     unique("auth_identities_provider_account_unique").on(t.provider, t.providerAccountId),
+    // One identity per provider per user (a user can't have two password rows).
+    unique("auth_identities_user_provider_unique").on(t.userId, t.provider),
     check("auth_identities_provider_check", sql`${t.provider} in ('password', 'google')`),
+    // Provider-specific shape: password rows carry a hash and no external id;
+    // google (future SSO) rows carry an external account id and no hash.
+    check(
+      "auth_identities_shape_check",
+      sql`(
+        (${t.provider} = 'password' and ${t.passwordHash} is not null and ${t.providerAccountId} is null)
+        or
+        (${t.provider} = 'google' and ${t.providerAccountId} is not null and ${t.passwordHash} is null)
+      )`,
+    ),
   ],
 );
 

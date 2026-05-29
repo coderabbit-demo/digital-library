@@ -1,5 +1,5 @@
 {
-  "id": "c7b9b79e-b35b-41b4-946e-9b3605a2a71a",
+  "id": "f759c5a9-e90a-44a4-96dd-28c6b444c21a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -164,6 +164,14 @@
             "provider",
             "provider_account_id"
           ]
+        },
+        "auth_identities_user_provider_unique": {
+          "name": "auth_identities_user_provider_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id",
+            "provider"
+          ]
         }
       },
       "policies": {},
@@ -171,6 +179,10 @@
         "auth_identities_provider_check": {
           "name": "auth_identities_provider_check",
           "value": "\"auth_identities\".\"provider\" in ('password', 'google')"
+        },
+        "auth_identities_shape_check": {
+          "name": "auth_identities_shape_check",
+          "value": "(\n        (\"auth_identities\".\"provider\" = 'password' and \"auth_identities\".\"password_hash\" is not null and \"auth_identities\".\"provider_account_id\" is null)\n        or\n        (\"auth_identities\".\"provider\" = 'google' and \"auth_identities\".\"provider_account_id\" is not null and \"auth_identities\".\"password_hash\" is null)\n      )"
         }
       },
       "isRLSEnabled": false

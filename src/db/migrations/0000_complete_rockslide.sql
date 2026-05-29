@@ -1,3 +1,4 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";--> statement-breakpoint
 CREATE TABLE "activities" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -15,7 +16,13 @@ CREATE TABLE "auth_identities" (
 	"provider_account_id" text,
 	"password_hash" text,
 	CONSTRAINT "auth_identities_provider_account_unique" UNIQUE("provider","provider_account_id"),
-	CONSTRAINT "auth_identities_provider_check" CHECK ("auth_identities"."provider" in ('password', 'google'))
+	CONSTRAINT "auth_identities_user_provider_unique" UNIQUE("user_id","provider"),
+	CONSTRAINT "auth_identities_provider_check" CHECK ("auth_identities"."provider" in ('password', 'google')),
+	CONSTRAINT "auth_identities_shape_check" CHECK ((
+        ("auth_identities"."provider" = 'password' and "auth_identities"."password_hash" is not null and "auth_identities"."provider_account_id" is null)
+        or
+        ("auth_identities"."provider" = 'google' and "auth_identities"."provider_account_id" is not null and "auth_identities"."password_hash" is null)
+      ))
 );
 --> statement-breakpoint
 CREATE TABLE "library_entries" (
