@@ -17,22 +17,24 @@ function formatTime(iso: string): string {
   }).format(date);
 }
 
-/** Community activity feed (DL-30). Entries arrive newest-first and resolved. */
+/** Community activity feed (DL-30; restyled DL-48). Entries arrive newest-first. */
 export function Feed({ entries }: FeedProps): React.JSX.Element {
   if (entries.length === 0) {
-    return <p className="empty-state">No community activity yet.</p>;
+    return <p className="py-4 text-muted-foreground">No community activity yet.</p>;
   }
   return (
-    <ul className="feed-list">
+    <ul className="mt-2 flex flex-col divide-y divide-border">
       {entries.map((entry) => (
-        <li key={entry.id} className="feed-item">
+        <li key={entry.id} className="flex items-start gap-3 py-3">
           <Avatar name={entry.actorName} color={entry.avatarColor} />
-          <div>
-            <p>
-              <strong>{entry.actorName}</strong> {entry.detail}{" "}
-              <strong>{entry.itemTitle}</strong>.
+          <div className="min-w-0">
+            <p className="text-sm">
+              <strong className="font-medium">{entry.actorName}</strong> {entry.detail}{" "}
+              <strong className="font-medium">{entry.itemTitle}</strong>.
             </p>
-            <time dateTime={entry.createdAt}>{formatTime(entry.createdAt)}</time>
+            <time dateTime={entry.createdAt} className="text-xs text-muted-foreground">
+              {formatTime(entry.createdAt)}
+            </time>
           </div>
         </li>
       ))}

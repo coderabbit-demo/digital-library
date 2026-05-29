@@ -2,10 +2,11 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { FeedEntryDTO } from "@/lib/types";
-import { mockHomeStats } from "@/lib/home-stats";
 import { mediaTypeOptions } from "@/lib/media-type";
-import { Hero } from "./Hero";
-import { StatsPanel } from "./StatsPanel";
+import type { AchievementView } from "@/lib/achievements";
+import { DashboardHeader } from "./DashboardHeader";
+import { StatCards } from "./StatCards";
+import { AchievementsSection } from "./AchievementsSection";
 import { Feed } from "./Feed";
 import { FeedFilter } from "./FeedFilter";
 
@@ -33,17 +34,47 @@ const entry = (over: Partial<FeedEntryDTO> = {}): FeedEntryDTO => ({
   ...over,
 });
 
-describe("home components (DL-29/30/31)", () => {
-  it("hero greets the user by name with a catalog CTA", () => {
-    render(<Hero userName="Ava" />);
-    expect(screen.getByRole("heading", { level: 1, name: /Hello, Ava/ })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /catalog/i })).toHaveAttribute("href", "/catalog");
+const stats = {
+  counts: { wishlist: 1, current: 2, finished: 3, reviewed: 2 },
+  totalPagesRead: 304,
+  inProgress: 2,
+};
+
+describe("home dashboard (DL-48)", () => {
+  it("greets the user by name", () => {
+    render(<DashboardHeader userName="Ava" />);
+    expect(screen.getByRole("heading", { level: 1, name: /Welcome back, Ava/ })).toBeInTheDocument();
   });
 
-  it("stats panel shows counters and a goals placeholder", () => {
-    render(<StatsPanel stats={mockHomeStats()} />);
-    expect(screen.getByText("Wishlist")).toBeInTheDocument();
-    expect(screen.getByText(/goals/i)).toBeInTheDocument();
+  it("renders live stat cards with goal progress and a streak", () => {
+    render(
+      <StatCards
+        stats={stats}
+        goalProgress={{ target: 24, completed: 1, remaining: 23, period: "year", periodKey: "2026" }}
+        streaks={{ current: 5, longest: 7 }}
+      />,
+    );
+    expect(screen.getByText("Pages Read")).toBeInTheDocument();
+    expect(screen.getByText("304")).toBeInTheDocument();
+    expect(screen.getByText("1 / 24")).toBeInTheDocument();
+    expect(screen.getByText("23 to go")).toBeInTheDocument();
+    expect(screen.getByText(/Longest: 7 days/)).toBeInTheDocument();
+  });
+
+  it("prompts to set a goal when none exists", () => {
+    render(<StatCards stats={stats} goalProgress={null} streaks={{ current: 0, longest: 0 }} />);
+    expect(screen.getByText(/Set a yearly goal/i)).toBeInTheDocument();
+  });
+
+  it("shows achievements with an unlocked count", () => {
+    const achievements: AchievementView[] = [
+      { key: "a", title: "First Finish", description: "d", unlocked: true, achievedAt: "x", progress: null },
+      { key: "b", title: "Bookworm", description: "d", unlocked: false, achievedAt: null, progress: { current: 304, target: 1000 } },
+    ];
+    render(<AchievementsSection achievements={achievements} />);
+    expect(screen.getByText("1 of 2")).toBeInTheDocument();
+    expect(screen.getByText("First Finish")).toBeInTheDocument();
+    expect(screen.getByText("Bookworm")).toBeInTheDocument();
   });
 
   it("feed renders an entry with actor, detail, and title", () => {
