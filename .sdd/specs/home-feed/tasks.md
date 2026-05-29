@@ -120,15 +120,15 @@
   - _Requirements: 5.1, 5.2, 5.3, 5.5, 5.6, 5.7, 6.2, 6.3, 13.3_
 
 - [ ] 8. Dedicated section pages
-- [ ] 8.1 (P) Shelves page
+- [x] 8.1 (P) Shelves page
   - Present the user's library as the sole content with shelf filtering, wishlist/current/finished status actions, and review controls, persisting actions through the backend so they reach the Home feed
   - _Requirements: 7.1, 7.4, 13.1_
 
-- [ ] 8.2 (P) Catalog page
+- [x] 8.2 (P) Catalog page
   - Present the catalog with genre filtering, add-to-shelf actions, and the add-a-custom-e-book capability, persisting through the backend
   - _Requirements: 7.2, 7.4, 13.1_
 
-- [ ] 8.3 (P) Profile page
+- [x] 8.3 (P) Profile page
   - Present editable profile fields and media preferences, saving through the backend
   - _Requirements: 7.3, 13.1_
 
