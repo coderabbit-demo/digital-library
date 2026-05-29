@@ -43,6 +43,8 @@ export function toMediaItem(row: MediaItemRow): MediaItem {
     language: row.language,
     description: row.description,
     coverTheme: row.coverTheme,
+    metadata: row.metadata ?? null,
+    totalUnits: row.totalUnits,
   };
 }
 
@@ -54,6 +56,7 @@ export function toLibraryEntry(row: LibraryEntryRow): LibraryEntry {
     status: row.status as LibraryStatus,
     rating: row.rating,
     review: row.review,
+    progress: row.progress,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
