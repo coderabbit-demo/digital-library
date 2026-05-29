@@ -7,18 +7,22 @@ import type {
   Activity,
   ActivityAction,
   FeedEntryDTO,
+  Goal,
   LibraryEntry,
   LibraryStatus,
   MediaItem,
   Preferences,
   User,
+  UserAchievement,
   UserKind,
 } from "@/lib/types";
 import type {
   ActivityRow,
+  GoalRow,
   LibraryEntryRow,
   MediaItemRow,
   PreferencesRow,
+  UserAchievementRow,
   UserRow,
 } from "./schema";
 
@@ -69,6 +73,26 @@ export function toActivity(row: ActivityRow): Activity {
     action: row.action as ActivityAction,
     detail: row.detail,
     createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export function toGoal(row: GoalRow): Goal {
+  return {
+    id: row.id,
+    userId: row.userId,
+    period: row.period,
+    periodKey: row.periodKey,
+    targetCount: row.targetCount,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export function toUserAchievement(row: UserAchievementRow): UserAchievement {
+  return {
+    id: row.id,
+    userId: row.userId,
+    achievementKey: row.achievementKey,
+    achievedAt: row.achievedAt.toISOString(),
   };
 }
 

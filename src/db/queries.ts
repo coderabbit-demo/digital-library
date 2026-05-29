@@ -8,33 +8,40 @@
  * own. Execution against a real database is covered by integration tests once
  * the Docker Postgres lands (DL-17).
  */
-import { and, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lt } from "drizzle-orm";
 import type {
   Activity,
   ActivityAction,
+  Goal,
   LibraryEntry,
   LibraryStatus,
   MediaItem,
   MediaType,
   Preferences,
   User,
+  UserAchievement,
 } from "@/lib/types";
 import type { DbExecutor } from "./client";
 import {
   toActivity,
   toFeedEntry,
+  toGoal,
   toLibraryEntry,
   toMediaItem,
   toPreferences,
   toUser,
+  toUserAchievement,
 } from "./mappers";
 import {
   activities,
   authIdentities,
+  goals,
   libraryEntries,
+  libraryEntryTags,
   mediaItems,
   preferences,
   sessions,
+  userAchievements,
   users,
   type NewUserRow,
 } from "./schema";
@@ -237,6 +244,150 @@ export async function listFeed(db: DbExecutor,
     .orderBy(desc(activities.createdAt))
     .limit(opts.limit ?? FEED_DEFAULT_LIMIT);
   return rows.map((r) => toFeedEntry(r.activity, r.actor, r.media));
+}
+
+/* ----------------------------- entry tags (Req 2) ------------------------ */
+
+/** Tags for a set of entries, aggregated per entry id and sorted for stable display. */
+export async function listTagsByEntryIds(
+  db: DbExecutor,
+  entryIds: readonly string[],
+): Promise<Map<string, string[]>> {
+  const byEntry = new Map<string, string[]>();
+  if (entryIds.length === 0) return byEntry;
+  const rows = await db
+    .select()
+    .from(libraryEntryTags)
+    .where(inArray(libraryEntryTags.entryId, [...entryIds]));
+  for (const row of rows) {
+    const list = byEntry.get(row.entryId) ?? [];
+    list.push(row.tag);
+    byEntry.set(row.entryId, list);
+  }
+  for (const [key, list] of byEntry) byEntry.set(key, list.sort());
+  return byEntry;
+}
+
+/**
+ * Replace an entry's tag set. Returns null if the entry is not owned by the
+ * user (so the handler can answer 404); otherwise returns the new tags. Run
+ * inside a transaction so the delete+insert is atomic.
+ */
+export async function setEntryTags(
+  db: DbExecutor,
+  input: { entryId: string; userId: string; tags: string[] },
+): Promise<string[] | null> {
+  const [owned] = await db
+    .select({ id: libraryEntries.id })
+    .from(libraryEntries)
+    .where(and(eq(libraryEntries.id, input.entryId), eq(libraryEntries.userId, input.userId)))
+    .limit(1);
+  if (!owned) return null;
+
+  await db.delete(libraryEntryTags).where(eq(libraryEntryTags.entryId, input.entryId));
+  if (input.tags.length > 0) {
+    await db
+      .insert(libraryEntryTags)
+      .values(input.tags.map((tag) => ({ entryId: input.entryId, tag })));
+  }
+  return input.tags;
+}
+
+/* --------------------------- progress (Req 3) ---------------------------- */
+
+/** Record consumption progress on the user's own entry; null if not owned. */
+export async function updateEntryProgress(
+  db: DbExecutor,
+  input: { entryId: string; userId: string; progress: number; updatedAt: Date },
+): Promise<LibraryEntry | null> {
+  const [row] = await db
+    .update(libraryEntries)
+    .set({ progress: input.progress, updatedAt: input.updatedAt })
+    .where(and(eq(libraryEntries.id, input.entryId), eq(libraryEntries.userId, input.userId)))
+    .returning();
+  return row ? toLibraryEntry(row) : null;
+}
+
+/* ----------------------------- goals (Req 4) ----------------------------- */
+
+export async function getActiveGoal(
+  db: DbExecutor,
+  userId: string,
+  period: string,
+  periodKey: string,
+): Promise<Goal | null> {
+  const [row] = await db
+    .select()
+    .from(goals)
+    .where(and(eq(goals.userId, userId), eq(goals.period, period), eq(goals.periodKey, periodKey)))
+    .limit(1);
+  return row ? toGoal(row) : null;
+}
+
+/** Create or update the goal for a user/period/period-key (idempotent). */
+export async function upsertGoal(
+  db: DbExecutor,
+  input: { userId: string; period: string; periodKey: string; targetCount: number },
+): Promise<Goal> {
+  const [row] = await db
+    .insert(goals)
+    .values(input)
+    .onConflictDoUpdate({
+      target: [goals.userId, goals.period, goals.periodKey],
+      set: { targetCount: input.targetCount },
+    })
+    .returning();
+  if (!row) throw new Error("upsertGoal returned no row");
+  return toGoal(row);
+}
+
+/** Count the user's finished entries updated within [from, to) — goal progress. */
+export async function countFinishedBetween(
+  db: DbExecutor,
+  userId: string,
+  from: Date,
+  to: Date,
+): Promise<number> {
+  const [row] = await db
+    .select({ value: count() })
+    .from(libraryEntries)
+    .where(
+      and(
+        eq(libraryEntries.userId, userId),
+        eq(libraryEntries.status, "finished"),
+        gte(libraryEntries.updatedAt, from),
+        lt(libraryEntries.updatedAt, to),
+      ),
+    );
+  return row?.value ?? 0;
+}
+
+/* ------------------------- achievements (Req 6) -------------------------- */
+
+export async function listUserAchievements(
+  db: DbExecutor,
+  userId: string,
+): Promise<UserAchievement[]> {
+  const rows = await db
+    .select()
+    .from(userAchievements)
+    .where(eq(userAchievements.userId, userId));
+  return rows.map(toUserAchievement);
+}
+
+/** Record first unlocks idempotently; existing rows are left untouched. */
+export async function insertAchievementUnlocks(
+  db: DbExecutor,
+  userId: string,
+  keys: readonly string[],
+): Promise<void> {
+  if (keys.length === 0) return;
+  await db
+    .insert(userAchievements)
+    .values(keys.map((achievementKey) => ({ userId, achievementKey })))
+    .onConflictDoNothing({
+      target: [userAchievements.userId, userAchievements.achievementKey],
+    });
 }
 
 /* ------------------------------- preferences ----------------------------- */
