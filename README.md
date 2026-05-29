@@ -23,13 +23,18 @@ Built with **Next.js (App Router) + React + TypeScript**, **PostgreSQL** via **D
    cp .env.example .env.local
    ```
 
-   Required variables (validated at startup):
+   Required variables — validated at startup; the app fails fast if missing:
 
    | Variable | Purpose |
    |----------|---------|
    | `DATABASE_URL` | PostgreSQL connection string |
    | `AUTH_SECRET` | Secret for signing session cookies (`openssl rand -base64 32`) |
-   | `NYT_API_KEY` | NYT Best Seller API key (recommendations feature) |
+
+   Optional / feature-specific (not validated at startup):
+
+   | Variable | Purpose |
+   |----------|---------|
+   | `NYT_API_KEY` | NYT Best Seller API key; required only by the recommendations feature, which validates it on use |
 
    `POSTGRES_*` values are read by Docker Compose for the local database.
 
