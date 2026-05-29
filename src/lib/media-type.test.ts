@@ -3,6 +3,7 @@ import type { MediaItem } from "@/lib/types";
 import {
   distinctMediaTypes,
   filterHref,
+  mediaTypeCounts,
   mediaTypeLabel,
   mediaTypeOptions,
   resolveActiveType,
@@ -37,6 +38,15 @@ describe("media-type filter (DL-31)", () => {
       { value: "all", label: "All" },
       { value: "ebook", label: "Books" },
     ]);
+  });
+
+  it("counts items per type with an All total (Req 8.2)", () => {
+    expect(mediaTypeCounts([item("ebook"), item("ebook"), item("music")])).toEqual([
+      { value: "all", label: "All", count: 3 },
+      { value: "ebook", label: "Books", count: 2 },
+      { value: "music", label: "Music", count: 1 },
+    ]);
+    expect(mediaTypeCounts([])).toEqual([{ value: "all", label: "All", count: 0 }]);
   });
 
   it("supports non-ebook types without code changes (Req 6.2)", () => {

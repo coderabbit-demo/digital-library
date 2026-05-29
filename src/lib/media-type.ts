@@ -36,6 +36,26 @@ export function mediaTypeOptions(types: readonly string[]): MediaTypeOption[] {
   ];
 }
 
+export interface MediaTypeCount {
+  value: string;
+  label: string;
+  count: number;
+}
+
+/**
+ * "All" plus one option per present media type, each with a count, for the
+ * media-type filter (Req 8.2). Data-driven, no per-type branching.
+ */
+export function mediaTypeCounts(items: readonly MediaItem[]): MediaTypeCount[] {
+  const byType = new Map<string, number>();
+  for (const item of items) byType.set(item.type, (byType.get(item.type) ?? 0) + 1);
+  const types = [...byType.keys()].sort();
+  return [
+    { value: "all", label: "All", count: items.length },
+    ...types.map((type) => ({ value: type, label: mediaTypeLabel(type), count: byType.get(type) ?? 0 })),
+  ];
+}
+
 /** Filter selection is carried in the URL query so it survives a refresh (Req 5.7). */
 export function filterHref(value: string): string {
   return value === "all" ? "/" : `/?type=${encodeURIComponent(value)}`;
