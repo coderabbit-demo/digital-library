@@ -41,6 +41,11 @@ import {
 
 const FEED_DEFAULT_LIMIT = 12;
 
+/** Emails are stored and compared in lowercase so exact-match lookups stay consistent. */
+export function normalizeEmail<T extends string | null | undefined>(email: T): T {
+  return (typeof email === "string" ? email.toLowerCase() : email) as T;
+}
+
 /* ----------------------------- users & auth ----------------------------- */
 
 export async function findUserById(db: Db, id: string): Promise<User | null> {
@@ -52,13 +57,16 @@ export async function findUserByEmail(db: Db, email: string): Promise<User | nul
   const [row] = await db
     .select()
     .from(users)
-    .where(eq(users.email, email.toLowerCase()))
+    .where(eq(users.email, normalizeEmail(email)))
     .limit(1);
   return row ? toUser(row) : null;
 }
 
 export async function insertUser(db: Db, input: NewUserRow): Promise<User> {
-  const [row] = await db.insert(users).values(input).returning();
+  const [row] = await db
+    .insert(users)
+    .values({ ...input, email: normalizeEmail(input.email) })
+    .returning();
   if (!row) throw new Error("insertUser returned no row");
   return toUser(row);
 }
@@ -70,7 +78,7 @@ export async function updateUserProfile(
 ): Promise<User | null> {
   const [row] = await db
     .update(users)
-    .set({ name: patch.name, email: patch.email, bio: patch.bio })
+    .set({ name: patch.name, email: normalizeEmail(patch.email), bio: patch.bio })
     .where(eq(users.id, userId))
     .returning();
   return row ? toUser(row) : null;
@@ -85,7 +93,7 @@ export async function findPasswordCredential(
     .select({ user: users, passwordHash: authIdentities.passwordHash })
     .from(authIdentities)
     .innerJoin(users, eq(authIdentities.userId, users.id))
-    .where(and(eq(users.email, email.toLowerCase()), eq(authIdentities.provider, "password")))
+    .where(and(eq(users.email, normalizeEmail(email)), eq(authIdentities.provider, "password")))
     .limit(1);
   if (!row || row.passwordHash === null) return null;
   return { user: toUser(row.user), passwordHash: row.passwordHash };
