@@ -34,7 +34,10 @@ Built with **Next.js 15 (App Router) + React 19 + TypeScript** (strict), **Postg
 
    | Variable | Purpose |
    |----------|---------|
-   | `NYT_API_KEY` | NYT Best Seller API key; required only by the recommendations feature, which validates it on use |
+   | `NYT_API_KEY` | NYT Best Seller API key — the **books** provider for Trending Now (server-side only) |
+   | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Spotify app credentials (client-credentials OAuth) — the **music** provider for Trending Now (server-side only) |
+
+   Provider keys are read only on the server; the browser never receives them, and each provider degrades independently if its key is absent.
 
    `POSTGRES_*` values are read by Docker Compose for the local database.
 
