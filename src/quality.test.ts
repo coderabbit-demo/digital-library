@@ -28,8 +28,9 @@ describe("source quality guardrails (DL-51)", () => {
     expect(files.length).toBeGreaterThan(0);
   });
 
-  it("never renders unsanitized HTML (no dangerouslySetInnerHTML)", () => {
-    const offenders = files.filter((f) => readFileSync(f, "utf8").includes("dangerouslySetInnerHTML"));
+  it("never renders unsanitized HTML (no dangerouslySetInnerHTML prop)", () => {
+    // Match the JSX prop assignment shape so prose/comments don't trip the gate.
+    const offenders = files.filter((f) => /dangerouslySetInnerHTML\s*=/.test(readFileSync(f, "utf8")));
     expect(offenders).toEqual([]);
   });
 
