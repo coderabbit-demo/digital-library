@@ -4,7 +4,9 @@ Project memory for *how* work moves here — conventions that aren't derivable f
 
 ## Spec-Driven Development
 
-Features go through the SDD lifecycle in `.sdd/specs/<feature>/`: `spec-init → spec-requirements → spec-design → spec-tasks → spec-impl`, with human approval gating each phase (Requirements → Design → Tasks → Implementation). Requirements use EARS-format, numeric IDs (`N.M`). Existing specs: `home-feed` (shipped), `media-platform-v2` (shipped, the multi-media + re-skin v2), `nyt-recommendations` (planned).
+Features go through the SDD lifecycle in `.sdd/specs/<feature>/`: `spec-init → spec-requirements → spec-design → spec-tasks → spec-impl`, with human approval gating each phase (Requirements → Design → Tasks → Implementation). Requirements use EARS-format, numeric IDs (`N.M`). Existing specs: `home-feed` (shipped), `media-platform-v2` (shipped, the multi-media + re-skin v2), `nyt-recommendations` (being superseded by `trending-now`), `trending-now` (in progress).
+
+**Spec docs always go through a PR.** Whenever a **requirements.md** or **design.md** is created or updated, open a PR for it (with the Jira issue URL) and let it be reviewed/merged — do not commit requirement/design changes straight to `main`. The PR is the review surface for that phase, and CodeRabbit reviews it too. (Steering and incidental doc edits may be committed directly when the maintainer says so; this rule is specifically about spec requirements/design.)
 
 ## Task tracking — Jira
 
