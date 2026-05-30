@@ -1,8 +1,8 @@
 # LibraryLoop
 
-Full-stack app for tracking digital media consumption. The first implemented slice focuses on e-books: a Home page with a community activity feed, plus Shelves, Catalog, and Profile.
+A consumer-focused **digital library** for tracking the media you consume — **e-books, music, podcasts, and TV/movies** — in one place. Organize items with shelves (Wishlist / In progress / Completed) and free-form tags, record consumption progress, rate and review, and stay motivated with reading **goals, activity streaks, and achievements**. The Home page is a live dashboard of your stats and achievements alongside a community activity feed; the app is organized as **Home · Library · Wishlist · Reviews** (plus Profile).
 
-Built with **Next.js (App Router) + React + TypeScript**, **PostgreSQL** via **Drizzle ORM**, and real authentication. Deploys on **Vercel** with managed Postgres.
+Built with **Next.js 15 (App Router) + React 19 + TypeScript** (strict), **PostgreSQL** via **Drizzle ORM**, real session-based auth, and a **Tailwind v4 + shadcn/ui** design system with light/dark themes. Deploys on **Vercel** with managed Postgres.
 
 ## Prerequisites
 
@@ -71,7 +71,7 @@ Built with **Next.js (App Router) + React + TypeScript**, **PostgreSQL** via **D
 | `npm test` | Run the test suite (Vitest) |
 | `npm run db:generate` | Generate a Drizzle migration from the schema |
 | `npm run db:migrate` | Apply migrations |
-| `npm run db:seed` | Load starter catalog and demo data |
+| `npm run db:seed` | Load the multi-type catalog, demo goal/achievements, and demo account |
 
 ## Deployment (Vercel)
 
@@ -79,6 +79,6 @@ Set `DATABASE_URL` (managed Postgres, e.g. Vercel Postgres / Neon) and `AUTH_SEC
 
 Database migrations are applied automatically on every deploy: [`vercel.json`](vercel.json) sets the build command to `npm run db:migrate && npm run build`, so the schema is brought up to date (against the build-time `DATABASE_URL`) before the app is built.
 
-## Specs
+## Specs & steering
 
-Spec-driven development docs live under [.sdd/specs/](.sdd/specs/). The original prototype is preserved in [legacy/](legacy/) for reference.
+Spec-driven development docs live under [.sdd/specs/](.sdd/specs/) — `home-feed` and `media-platform-v2` are shipped; `nyt-recommendations` is planned. Project-wide steering (product, tech, structure, workflow) lives under [.sdd/steering/](.sdd/steering/) and is loaded as project memory. The original browser-only prototype is preserved in [legacy/](legacy/) for reference.
