@@ -12,8 +12,10 @@ export default async function ProfilePage(): Promise<React.JSX.Element> {
   const preferences = (await findPreferences(getDb(), user.id)) ?? emptyPreferences();
 
   return (
-    <section aria-labelledby="profile-title">
-      <h1 id="profile-title">Profile</h1>
+    <section aria-labelledby="profile-title" className="flex flex-col gap-4">
+      <h1 id="profile-title" className="text-2xl font-medium">
+        Profile
+      </h1>
       <ProfileForm user={user} preferences={preferences} />
     </section>
   );

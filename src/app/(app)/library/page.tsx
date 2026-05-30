@@ -1,48 +1,46 @@
 import { redirect } from "next/navigation";
-import { ReviewForm } from "@/components/library/ReviewForm";
-import { ShelfStatusButtons } from "@/components/library/ShelfStatusButtons";
-import { BookCover } from "@/components/ui/BookCover";
-import { Pill } from "@/components/ui/Pill";
+import { LibraryCard } from "@/components/library/LibraryCard";
+import { MediaTypeFilter } from "@/components/library/MediaTypeFilter";
 import { getDb } from "@/db/client";
-import { listEntriesForUser, listMedia } from "@/db/queries";
+import { listEntriesForUser, listMedia, listTagsByEntryIds } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
-import { composeShelfItems, statusLabel } from "@/lib/library-view";
+import { composeShelfItems } from "@/lib/library-view";
+import { mediaTypeCounts } from "@/lib/media-type";
 
-/**
- * Library (DL-46): the signed-in user's full collection across all media types.
- * Interim presentation reuses the existing card components; DL-47/DL-49 bring
- * the media-type filter and the enriched card design.
- */
-export default async function LibraryPage(): Promise<React.JSX.Element> {
+/** Library (DL-49): the full collection across types, with a media-type filter
+ * and per-item actions, preserving shelf behavior (Req 11.1, 8.x). */
+export default async function LibraryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
+  const { type } = await searchParams;
   const db = getDb();
   const [entries, media] = await Promise.all([listEntriesForUser(db, user.id), listMedia(db)]);
   const items = composeShelfItems(entries, media);
+  const tagsByEntry = await listTagsByEntryIds(db, items.map(({ entry }) => entry.id));
+
+  const options = mediaTypeCounts(items.map(({ item }) => item));
+  const activeType = options.some((o) => o.value === type) ? (type as string) : "all";
+  const visible = activeType === "all" ? items : items.filter(({ item }) => item.type === activeType);
+  const hrefFor = (value: string) => (value === "all" ? "/library" : `/library?type=${encodeURIComponent(value)}`);
 
   return (
-    <section aria-labelledby="library-title">
-      <h1 id="library-title">My Library</h1>
-      {items.length === 0 ? (
-        <p className="empty-state">Your library is empty. Use “Add item” to get started.</p>
+    <section aria-labelledby="library-title" className="flex flex-col gap-4">
+      <h1 id="library-title" className="text-2xl font-medium">
+        My Library
+      </h1>
+      <MediaTypeFilter options={options} activeValue={activeType} hrefFor={hrefFor} />
+      {visible.length === 0 ? (
+        <p className="py-4 text-muted-foreground">Nothing here yet. Use “Add item” to get started.</p>
       ) : (
-        <ul className="shelf-grid">
-          {items.map(({ entry, item }) => (
-            <li key={entry.id} className="media-card">
-              <BookCover title={item.title} theme={item.coverTheme} />
-              <div className="card-body">
-                <Pill>{statusLabel(entry.status)}</Pill>
-                <h3>{item.title}</h3>
-                <p className="creator">
-                  {item.creator} · {item.genre}
-                </p>
-                {entry.review ? <blockquote>{entry.review}</blockquote> : null}
-                <ShelfStatusButtons mediaItemId={item.id} />
-                {entry.status === "finished" ? (
-                  <ReviewForm entryId={entry.id} rating={entry.rating ?? 5} review={entry.review} />
-                ) : null}
-              </div>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map(({ entry, item }) => (
+            <li key={entry.id}>
+              <LibraryCard item={item} entry={entry} tags={tagsByEntry.get(entry.id) ?? []} />
             </li>
           ))}
         </ul>

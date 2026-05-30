@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BookMarked, Heart, Home, LogOut, Plus, Star, type LucideIcon } from "lucide-react";
+import { BookMarked, Heart, Home, LogOut, Star, type LucideIcon } from "lucide-react";
+import { AddItemDialog } from "@/components/library/AddItemDialog";
 import { Button } from "@/components/ui/button";
 import { appConfig } from "@/lib/app-config";
 import { cn } from "@/lib/utils";
@@ -60,13 +61,7 @@ export function AppNav({ userName, avatarColor }: AppNavProps): React.JSX.Elemen
         </Link>
 
         <div className="flex items-center gap-2">
-          <Button asChild size="sm">
-            <Link href="/catalog">
-              <Plus aria-hidden="true" />
-              <span className="hidden sm:inline">Add item</span>
-              <span className="sm:hidden">Add</span>
-            </Link>
-          </Button>
+          <AddItemDialog />
           <Link
             href="/profile"
             aria-label={`${userName} — profile and account`}
