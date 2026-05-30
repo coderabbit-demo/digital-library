@@ -42,6 +42,8 @@ export function AddItemDialog(): React.JSX.Element {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [catalog, setCatalog] = useState<MediaItem[] | null>(null);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [addingId, setAddingId] = useState<string | null>(null);
 
   function done(): void {
     setOpen(false);
@@ -51,13 +53,17 @@ export function AddItemDialog(): React.JSX.Element {
 
   async function loadCatalog(): Promise<void> {
     if (catalog) return;
+    setCatalogError(null);
     try {
       const res = await fetch("/api/media");
-      if (!res.ok) return;
+      if (!res.ok) {
+        setCatalogError("Could not load the catalog. Please try again.");
+        return;
+      }
       const data = (await res.json()) as MediaListResponse;
       setCatalog(data.items);
     } catch {
-      /* leave catalog null; the tab shows an empty state */
+      setCatalogError("Could not load the catalog. Please try again.");
     }
   }
 
@@ -95,8 +101,17 @@ export function AddItemDialog(): React.JSX.Element {
   }
 
   async function addFromCatalog(mediaItemId: string): Promise<void> {
-    const result = await sendJson("/api/library", { mediaItemId, status: "wishlist" });
-    if (result.ok) done();
+    setAddingId(mediaItemId);
+    setCatalogError(null);
+    try {
+      const result = await sendJson("/api/library", { mediaItemId, status: "wishlist" });
+      if (result.ok) done();
+      else setCatalogError(result.message ?? "Could not add the item.");
+    } catch {
+      setCatalogError("Could not add the item.");
+    } finally {
+      setAddingId(null);
+    }
   }
 
   return (
@@ -219,7 +234,16 @@ export function AddItemDialog(): React.JSX.Element {
 
           <TabsContent value="catalog">
             <div className="flex flex-col gap-2 pt-2">
-              {catalog === null ? (
+              {catalogError ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {catalogError}
+                </p>
+              ) : null}
+              {catalogError && catalog === null ? (
+                <Button size="sm" variant="outline" onClick={() => void loadCatalog()}>
+                  Retry
+                </Button>
+              ) : catalog === null ? (
                 <p className="py-4 text-sm text-muted-foreground">Loading catalog…</p>
               ) : catalog.length === 0 ? (
                 <p className="py-4 text-sm text-muted-foreground">No catalog items available.</p>
@@ -231,8 +255,13 @@ export function AddItemDialog(): React.JSX.Element {
                         <p className="truncate text-sm font-medium">{item.title}</p>
                         <p className="truncate text-xs text-muted-foreground">{item.creator}</p>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => void addFromCatalog(item.id)}>
-                        Add
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={addingId !== null}
+                        onClick={() => void addFromCatalog(item.id)}
+                      >
+                        {addingId === item.id ? "Adding…" : "Add"}
                       </Button>
                     </li>
                   ))}

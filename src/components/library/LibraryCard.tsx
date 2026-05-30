@@ -66,7 +66,7 @@ export function LibraryCard({ item, entry, tags }: LibraryCardProps): React.JSX.
       });
       let ok = tagsResult.ok;
       let message = tagsResult.message;
-      if (entry.status === "finished") {
+      if (showReview) {
         const reviewResult = await sendJson("/api/library/review", {
           entryId: entry.id,
           rating: Number(data.get("rating")),
@@ -87,6 +87,10 @@ export function LibraryCard({ item, entry, tags }: LibraryCardProps): React.JSX.
       setPending(false);
     }
   }
+
+  // A rated entry can always edit its review (it still appears on Reviews even
+  // if moved off the finished shelf), so gate on rating OR finished status.
+  const showReview = entry.status === "finished" || entry.rating !== null;
 
   const actions = (
     <>
@@ -116,7 +120,7 @@ export function LibraryCard({ item, entry, tags }: LibraryCardProps): React.JSX.
             <DialogTitle>Edit {item.title}</DialogTitle>
           </DialogHeader>
           <form onSubmit={(e) => void save(e)} className="flex flex-col gap-3">
-            {entry.status === "finished" ? (
+            {showReview ? (
               <>
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="rating">Rating</Label>
