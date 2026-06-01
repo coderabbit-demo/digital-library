@@ -53,10 +53,13 @@ export function ItemActions({ mediaItemId, entry, tags }: ItemActionsProps): Rea
   async function move(status: LibraryStatus): Promise<void> {
     setPending(true);
     reset();
-    const result = await sendJson("/api/library", { mediaItemId, status });
-    if (result.ok) router.refresh();
-    else setError(result.message ?? "Could not update the shelf.");
-    setPending(false);
+    try {
+      const result = await sendJson("/api/library", { mediaItemId, status });
+      if (result.ok) router.refresh();
+      else setError(result.message ?? "Could not update the shelf.");
+    } finally {
+      setPending(false);
+    }
   }
 
   /** Return the entry id, creating the entry (as read) first if absent. */
@@ -109,17 +112,20 @@ export function ItemActions({ mediaItemId, entry, tags }: ItemActionsProps): Rea
     setPending(true);
     reset();
     const data = new FormData(event.currentTarget);
-    const result = await sendJson("/api/library/tags", {
-      entryId: entry.id,
-      tags: normalizeTags(String(data.get("tags") ?? "")),
-    });
-    if (result.ok) {
-      setSaved("Tags saved.");
-      router.refresh();
-    } else {
-      setError(result.message ?? "Could not save the tags.");
+    try {
+      const result = await sendJson("/api/library/tags", {
+        entryId: entry.id,
+        tags: normalizeTags(String(data.get("tags") ?? "")),
+      });
+      if (result.ok) {
+        setSaved("Tags saved.");
+        router.refresh();
+      } else {
+        setError(result.message ?? "Could not save the tags.");
+      }
+    } finally {
+      setPending(false);
     }
-    setPending(false);
   }
 
   return (
