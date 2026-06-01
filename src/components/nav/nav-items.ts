@@ -3,7 +3,7 @@
  * Data-driven so additional routes (e.g. Recommendations) slot in without
  * touching the nav component. Uses the reference IA labels.
  */
-export type NavIcon = "home" | "library" | "wishlist" | "reviews";
+export type NavIcon = "home" | "library" | "wishlist" | "reviews" | "trending";
 
 export interface NavItem {
   href: string;
@@ -16,6 +16,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/library", label: "Library", icon: "library" },
   { href: "/wishlist", label: "Wishlist", icon: "wishlist" },
   { href: "/reviews", label: "Reviews", icon: "reviews" },
+  { href: "/trending", label: "Trending", icon: "trending" },
 ];
 
 /** Active when the path matches the item (Home only on exact "/"). */
