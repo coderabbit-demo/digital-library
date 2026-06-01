@@ -17,7 +17,7 @@
   - Confirm the relocated filter control renders one option per input with its count, marks the active option for assistive technology, and renders each option as a navigable link to the expected target.
   - _Requirements: 1.1, 1.2, 1.6, 1.7, 6.1, 6.2, 6.3, 6.4_
 
-- [ ] 2. (P) Trending media-type filtering logic
+- [x] 2. (P) Trending media-type filtering logic
   - Add pure functions over an already-fetched trending feed: one returning the distinct media types present across healthy sources (for option building), and one that narrows the feed by a selected type — returning the feed unchanged for "All", and otherwise keeping only items whose type matches while dropping source groups left with no matching items, preserving item order and never triggering any source fetch.
   - Unit-test "All" (unchanged), a specific type (matching items kept, empty groups removed), mixed-type sources, and a no-match selection (no groups).
   - _Requirements: 2.2, 2.3, 2.4, 3.2_
