@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BookMarked, Heart, Home, LogOut, Star, type LucideIcon } from "lucide-react";
+import { BookMarked, Heart, Home, LogOut, Star, TrendingUp, type LucideIcon } from "lucide-react";
 import { AddItemDialog } from "@/components/library/AddItemDialog";
 import { Button } from "@/components/ui/button";
 import { appConfig } from "@/lib/app-config";
@@ -20,6 +20,7 @@ const NAV_ICONS: Record<NavIcon, LucideIcon> = {
   library: BookMarked,
   wishlist: Heart,
   reviews: Star,
+  trending: TrendingUp,
 };
 
 /**

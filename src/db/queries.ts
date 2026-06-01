@@ -8,7 +8,7 @@
  * own. Execution against a real database is covered by integration tests once
  * the Docker Postgres lands (DL-17).
  */
-import { and, count, desc, eq, gte, inArray, lt } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import type {
   Activity,
   ActivityAction,
@@ -157,6 +157,27 @@ export async function findMediaByTitleCreator(db: DbExecutor,
     .select()
     .from(mediaItems)
     .where(and(eq(mediaItems.title, title), eq(mediaItems.creator, creator)))
+    .limit(1);
+  return row ? toMediaItem(row) : null;
+}
+
+/** Type-scoped, case-insensitive match for de-duping trending adds (Req 7.5). */
+export async function findMediaByTypeTitleCreator(
+  db: DbExecutor,
+  type: string,
+  title: string,
+  creator: string,
+): Promise<MediaItem | null> {
+  const [row] = await db
+    .select()
+    .from(mediaItems)
+    .where(
+      and(
+        eq(mediaItems.type, type),
+        sql`lower(${mediaItems.title}) = lower(${title})`,
+        sql`lower(${mediaItems.creator}) = lower(${creator})`,
+      ),
+    )
     .limit(1);
   return row ? toMediaItem(row) : null;
 }

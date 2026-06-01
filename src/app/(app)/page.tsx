@@ -4,6 +4,7 @@ import { DashboardHeader } from "@/components/home/DashboardHeader";
 import { Feed } from "@/components/home/Feed";
 import { FeedFilter } from "@/components/home/FeedFilter";
 import { StatCards } from "@/components/home/StatCards";
+import { TrendingSection } from "@/components/trending/TrendingSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/db/client";
 import {
@@ -21,6 +22,7 @@ import { computeGoalProgress, DEFAULT_GOAL_PERIOD } from "@/lib/goals";
 import { distinctMediaTypes, mediaTypeOptions, resolveActiveType } from "@/lib/media-type";
 import { computeStreaks } from "@/lib/streaks";
 import { computeUserStats } from "@/lib/stats";
+import { ownedTrendingKeys } from "@/lib/trending/ownership";
 
 /**
  * Home dashboard (DL-48): a live goals/stats/achievements summary plus the
@@ -62,12 +64,14 @@ export default async function HomePage({
   const options = mediaTypeOptions(distinctMediaTypes(media));
   const activeType = resolveActiveType(type, options);
   const feed = await listFeed(db, activeType === "all" ? {} : { type: activeType });
+  const ownedTrending = ownedTrendingKeys(entries, media);
 
   return (
     <>
       <DashboardHeader userName={user.name} />
       <StatCards stats={stats} goalProgress={goalProgress} streaks={streaks} />
       <AchievementsSection achievements={achievements} />
+      <TrendingSection owned={ownedTrending} />
       <Card>
         <CardHeader>
           <CardTitle id="feed-title">Community feed</CardTitle>

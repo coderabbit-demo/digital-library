@@ -1,9 +1,10 @@
 {
   "feature_name": "nyt-recommendations",
   "created_at": "2026-05-28T22:50:00Z",
-  "updated_at": "2026-05-28T23:40:00Z",
+  "updated_at": "2026-06-01T17:30:00Z",
   "language": "en",
-  "phase": "requirements-generated",
+  "phase": "superseded",
+  "superseded_by": "trending-now",
   "approvals": {
     "requirements": {
       "generated": true,

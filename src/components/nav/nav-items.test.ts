@@ -2,9 +2,21 @@ import { describe, expect, it } from "vitest";
 import { isNavItemActive, NAV_ITEMS } from "./nav-items";
 
 describe("navigation model (DL-46)", () => {
-  it("uses the reference IA: Home, Library, Wishlist, Reviews", () => {
-    expect(NAV_ITEMS.map((i) => i.href)).toEqual(["/", "/library", "/wishlist", "/reviews"]);
-    expect(NAV_ITEMS.map((i) => i.label)).toEqual(["Home", "Library", "Wishlist", "Reviews"]);
+  it("uses the reference IA plus Trending", () => {
+    expect(NAV_ITEMS.map((i) => i.href)).toEqual([
+      "/",
+      "/library",
+      "/wishlist",
+      "/reviews",
+      "/trending",
+    ]);
+    expect(NAV_ITEMS.map((i) => i.label)).toEqual([
+      "Home",
+      "Library",
+      "Wishlist",
+      "Reviews",
+      "Trending",
+    ]);
   });
 
   it("marks Home active only on the exact root path", () => {
