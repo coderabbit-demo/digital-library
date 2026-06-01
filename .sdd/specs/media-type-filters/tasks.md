@@ -1,7 +1,7 @@
 # Implementation Plan
 
 - [ ] 1. Shared media-type filter foundation
-- [ ] 1.1 Generalize the shared media-type helpers
+- [x] 1.1 Generalize the shared media-type helpers
   - Add the ability to build per-type option counts from a plain list of media-type strings, so both library items and trending items (which expose their type under a different field) are supported, and have the existing item-based count helper reuse it.
   - Broaden active-type resolution so it accepts either the plain option list or the counted option list, always falling back to "All" for an unknown or missing value.
   - Add a configurable link builder that, given a surface's base path, an optional query-key, and optional sibling selections to preserve, returns a function producing the filter link for any option — omitting the key for "All" and dropping preserved selections that are "All" or absent, with URL-encoded values.
