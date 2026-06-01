@@ -17,6 +17,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import type { MediaItemMetadata, Preferences } from "@/lib/types/domain";
@@ -103,7 +104,15 @@ export const mediaItems = pgTable("media_items", {
   metadata: jsonb("metadata").$type<MediaItemMetadata>(),
   // Total consumable units (pages/episodes/runtime) backing progress (Req 3.1).
   totalUnits: integer("total_units"),
-});
+}, (t) => [
+  // Atomic de-dup key (DL-64): one catalog row per type + case-insensitive
+  // title/creator, so concurrent find-or-create can't insert duplicates.
+  uniqueIndex("media_items_type_title_creator_key").on(
+    t.type,
+    sql`lower(${t.title})`,
+    sql`lower(${t.creator})`,
+  ),
+]);
 
 export const libraryEntries = pgTable(
   "library_entries",

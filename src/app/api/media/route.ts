@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
 import {
+  findOrCreateMedia,
   insertActivity,
-  insertMediaItem,
   listMedia,
   setEntryTags,
   upsertEntryStatus,
@@ -62,7 +62,9 @@ export async function POST(request: Request): Promise<NextResponse<MediaCreateRe
     // Create the media item, the user's library entry, its tags, and the
     // activity atomically.
     const result = await db.transaction(async (tx) => {
-      const item = await insertMediaItem(tx, {
+      // Find-or-create so a custom add matching an existing catalog row reuses
+      // it (DL-64) rather than violating the unique key.
+      const { media: item } = await findOrCreateMedia(tx, {
         type: input.type,
         title: input.title,
         creator: input.creator,
