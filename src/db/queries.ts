@@ -190,6 +190,23 @@ export async function insertMediaItem(db: DbExecutor,
   return toMediaItem(row);
 }
 
+/**
+ * Atomically find-or-create a media row by its natural key (DL-64). Relies on
+ * the unique index on (type, lower(title), lower(creator)): insert-on-conflict
+ * either creates the row or no-ops, and the re-select returns the existing one —
+ * so concurrent callers can never create duplicates.
+ */
+export async function findOrCreateMedia(
+  db: DbExecutor,
+  input: Omit<MediaItem, "id">,
+): Promise<{ media: MediaItem; created: boolean }> {
+  const [inserted] = await db.insert(mediaItems).values(input).onConflictDoNothing().returning();
+  if (inserted) return { media: toMediaItem(inserted), created: true };
+  const existing = await findMediaByTypeTitleCreator(db, input.type, input.title, input.creator);
+  if (!existing) throw new Error("findOrCreateMedia: conflict but no existing row found");
+  return { media: existing, created: false };
+}
+
 /* ----------------------------- library entries --------------------------- */
 
 export async function listEntriesForUser(db: DbExecutor, userId: string): Promise<LibraryEntry[]> {

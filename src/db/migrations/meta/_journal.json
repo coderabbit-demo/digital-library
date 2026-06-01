@@ -15,6 +15,13 @@
       "when": 1780086921909,
       "tag": "0001_chief_the_watchers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780341593223,
+      "tag": "0002_melted_ego",
+      "breakpoints": true
     }
   ]
 }

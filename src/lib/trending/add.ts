@@ -9,9 +9,8 @@
 import type { DbExecutor } from "@/db/client";
 import {
   findEntry,
-  findMediaByTypeTitleCreator,
+  findOrCreateMedia,
   insertActivity,
-  insertMediaItem,
   upsertEntryStatus,
 } from "@/db/queries";
 import { actionForStatus, detailForStatus } from "@/lib/activity";
@@ -45,16 +44,14 @@ export interface ResolveTrendingInput {
 /**
  * Resolve an external (trending) item to a catalog media id WITHOUT creating a
  * library entry (media-detail DL-67) — so "View details" on a trending item can
- * open /item/[id]. Find-or-create by the same type-scoped key as the add path;
- * best-effort de-dup (see DL-64). The caller wraps it in a transaction.
+ * open /item/[id]. Atomic find-or-create on the natural key (DL-64). The caller
+ * wraps it in a transaction.
  */
 export async function resolveTrendingMedia(
   db: DbExecutor,
   input: ResolveTrendingInput,
 ): Promise<{ id: string; created: boolean }> {
-  const existing = await findMediaByTypeTitleCreator(db, input.type, input.title, input.creator);
-  if (existing) return { id: existing.id, created: false };
-  const media = await insertMediaItem(db, {
+  const { media, created } = await findOrCreateMedia(db, {
     type: input.type,
     title: input.title,
     creator: input.creator,
@@ -65,7 +62,7 @@ export async function resolveTrendingMedia(
     metadata: input.metadata,
     totalUnits: null,
   });
-  return { id: media.id, created: true };
+  return { id: media.id, created };
 }
 
 export async function addTrendingItem(
@@ -74,28 +71,19 @@ export async function addTrendingItem(
   input: AddTrendingInput,
   now: Date,
 ): Promise<AddTrendingResponse> {
-  // Best-effort de-dup: find-then-create is not atomic, so two *concurrent*
-  // adds of the same item could each insert a media row. The common case
-  // (double-click) is prevented client-side (the add control disables while in
-  // flight); the residual cross-request race would at worst create a duplicate
-  // shared catalog row. A DB-level fix (a functional unique index on
-  // media_items(type, lower(title), lower(creator)) + on-conflict) is tracked
-  // as follow-up hardening — it also affects the existing custom-add path and
-  // must reconcile pre-existing duplicates, so it is out of scope here.
-  const existingMedia = await findMediaByTypeTitleCreator(db, input.type, input.title, input.creator);
-  const media =
-    existingMedia ??
-    (await insertMediaItem(db, {
-      type: input.type,
-      title: input.title,
-      creator: input.creator,
-      genre: input.genre || "Unknown",
-      language: "English",
-      description: "",
-      coverTheme: pickCoverTheme(`${input.title}-${input.creator}`),
-      metadata: input.metadata,
-      totalUnits: null,
-    }));
+  // Atomic find-or-create on the natural key (DL-64): the unique index makes
+  // concurrent adds converge on one catalog row.
+  const { media, created } = await findOrCreateMedia(db, {
+    type: input.type,
+    title: input.title,
+    creator: input.creator,
+    genre: input.genre || "Unknown",
+    language: "English",
+    description: "",
+    coverTheme: pickCoverTheme(`${input.title}-${input.creator}`),
+    metadata: input.metadata,
+    totalUnits: null,
+  });
 
   const owned = await findEntry(db, userId, media.id);
   const alreadyOwned = owned !== null;
@@ -114,5 +102,5 @@ export async function addTrendingItem(
     createdAt: now,
   });
 
-  return { entry, created: existingMedia === null, alreadyOwned };
+  return { entry, created, alreadyOwned };
 }

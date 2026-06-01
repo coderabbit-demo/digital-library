@@ -36,20 +36,24 @@ async function user(email: string) {
   return r.user;
 }
 
+// Distinct title per call — media is unique by (type, lower(title), lower(creator)) (DL-64).
+let mediaSeq = 0;
+
 async function entryFor(
   userId: string,
   status: "wishlist" | "current" | "finished",
   updatedAt = new Date("2026-06-01T00:00:00Z"),
 ) {
+  mediaSeq += 1;
   const media = await insertMediaItem(db, {
     type: "music",
-    title: "Blue",
+    title: `Album ${mediaSeq}`,
     creator: "Joni Mitchell",
     genre: "Folk",
     language: "English",
     description: "",
     coverTheme: "navy",
-    metadata: { kind: "music", album: "Blue" },
+    metadata: { kind: "music", album: `Album ${mediaSeq}` },
     totalUnits: null,
   });
   return upsertEntryStatus(db, { userId, mediaItemId: media.id, status, updatedAt });
