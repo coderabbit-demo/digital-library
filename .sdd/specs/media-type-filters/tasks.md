@@ -22,7 +22,7 @@
   - Unit-test "All" (unchanged), a specific type (matching items kept, empty groups removed), mixed-type sources, and a no-match selection (no groups).
   - _Requirements: 2.2, 2.3, 2.4, 3.2_
 
-- [ ] 3. (P) Trending page filter
+- [x] 3. (P) Trending page filter
   - Read the selected media type from the page URL, build the filter options from the media types present in the current feed, resolve the active selection (defaulting to "All"), and render the shared filter control with links targeting the trending route.
   - Display source groups from the narrowed feed: "All" shows every group as today; a specific type shows only groups containing a matching item; show source status notices only in the "All" view, and show a single empty-state message when a selected type matches nothing.
   - Keep the feed fetched once with no type argument so filtering never changes which external sources are queried.
