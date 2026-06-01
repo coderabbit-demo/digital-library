@@ -37,7 +37,7 @@ Built with **Next.js 15 (App Router) + React 19 + TypeScript** (strict), **Postg
    | `NYT_API_KEY` | NYT Best Seller API key — the **books** provider for Trending Now (server-side only) |
    | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Spotify app credentials (client-credentials OAuth) — the **music** provider for Trending Now (server-side only) |
 
-   Provider keys are read only on the server; the browser never receives them, and each provider degrades independently if its key is absent.
+   Provider keys are read only on the server; the browser never receives them, and each provider degrades independently if its key is absent (Trending Now still renders the other sources). Both are **optional** — the app boots and runs without them; that source simply shows as not configured. Obtain them from the [NYT Developer portal](https://developer.nytimes.com/) (Books API) and the [Spotify Developer dashboard](https://developer.spotify.com/dashboard) (create an app for the client id/secret). Set them the same way locally (`.env`) and on the host (project environment variables).
 
    `POSTGRES_*` values are read by Docker Compose for the local database.
 
