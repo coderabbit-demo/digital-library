@@ -40,6 +40,14 @@ export async function addTrendingItem(
   input: AddTrendingInput,
   now: Date,
 ): Promise<AddTrendingResponse> {
+  // Best-effort de-dup: find-then-create is not atomic, so two *concurrent*
+  // adds of the same item could each insert a media row. The common case
+  // (double-click) is prevented client-side (the add control disables while in
+  // flight); the residual cross-request race would at worst create a duplicate
+  // shared catalog row. A DB-level fix (a functional unique index on
+  // media_items(type, lower(title), lower(creator)) + on-conflict) is tracked
+  // as follow-up hardening — it also affects the existing custom-add path and
+  // must reconcile pre-existing duplicates, so it is out of scope here.
   const existingMedia = await findMediaByTypeTitleCreator(db, input.type, input.title, input.creator);
   const media =
     existingMedia ??
