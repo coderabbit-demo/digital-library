@@ -16,22 +16,26 @@ FROM (
 WHERE a."media_item_id" = k."id" AND k."id" <> k."keeper";
 --> statement-breakpoint
 
--- Drop duplicate library entries that would collide with the keeper for the
--- same user (the unique (user_id, media_item_id) would otherwise be violated).
--- Cascades remove their entry tags.
+-- Collapse each user's library entries down to one survivor per natural-key
+-- group, so repointing to the keeper below can't violate the unique
+-- (user_id, media_item_id). This also covers a user who owns two or more
+-- non-keeper duplicates but none on the keeper. The survivor is the most
+-- meaningful entry (finished > current > wishlist, then most recently updated),
+-- not an arbitrary id. Cascades remove the dropped entries' tags.
 DELETE FROM "library_entries" AS le
 USING (
-  SELECT "id",
-         first_value("id") OVER (
-           PARTITION BY "type", lower("title"), lower("creator") ORDER BY "id"
-         ) AS "keeper"
-  FROM "media_items"
-) AS k
-WHERE le."media_item_id" = k."id" AND k."id" <> k."keeper"
-  AND EXISTS (
-    SELECT 1 FROM "library_entries" AS le2
-    WHERE le2."user_id" = le."user_id" AND le2."media_item_id" = k."keeper"
-  );
+  SELECT le2."id",
+         first_value(le2."id") OVER (
+           PARTITION BY le2."user_id", m."type", lower(m."title"), lower(m."creator")
+           ORDER BY
+             CASE le2."status" WHEN 'finished' THEN 0 WHEN 'current' THEN 1 ELSE 2 END,
+             le2."updated_at" DESC,
+             le2."id"
+         ) AS "keeper_entry"
+  FROM "library_entries" AS le2
+  JOIN "media_items" AS m ON m."id" = le2."media_item_id"
+) AS d
+WHERE le."id" = d."id" AND d."id" <> d."keeper_entry";
 --> statement-breakpoint
 
 -- Repoint the remaining library entries to the keeper.
