@@ -6,9 +6,10 @@
  * own stories: NYT books (DL-54) and Spotify music (DL-55).
  */
 import { nytBooksProvider } from "./nyt";
+import { spotifyMusicProvider } from "./spotify";
 import type { TrendingProvider } from "./provider";
 
 export const TRENDING_PROVIDERS: readonly TrendingProvider[] = [
   nytBooksProvider, // DL-54 (books)
-  // spotifyMusicProvider,  // DL-55 (music)
+  spotifyMusicProvider, // DL-55 (music)
 ];
