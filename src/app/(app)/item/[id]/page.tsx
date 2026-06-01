@@ -1,0 +1,83 @@
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { ItemActions } from "@/components/item/ItemActions";
+import { Badge } from "@/components/ui/badge";
+import { BookCover } from "@/components/ui/BookCover";
+import { StarRating } from "@/components/ui/StarRating";
+import { getDb } from "@/db/client";
+import { findEntry, findMediaById, listTagsByEntryIds } from "@/db/queries";
+import { getSessionUser } from "@/lib/auth/current-user";
+import { statusLabel } from "@/lib/library-view";
+import { formatMetaLine } from "@/lib/media-metadata";
+import { mediaTypeLabel } from "@/lib/media-type";
+
+/**
+ * Media item detail page (media-detail DL-68): full metadata/description for one
+ * item plus the user's status/rating/review/tags, with shelf + review actions.
+ * Authenticated; unknown ids render the not-found boundary.
+ */
+export default async function ItemPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<React.JSX.Element> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
+
+  const { id } = await params;
+  const db = getDb();
+  const item = await findMediaById(db, id);
+  if (!item) notFound();
+
+  const entry = await findEntry(db, user.id, id);
+  const tags = entry ? ((await listTagsByEntryIds(db, [entry.id])).get(entry.id) ?? []) : [];
+
+  return (
+    <section aria-labelledby="item-title" className="flex flex-col gap-6">
+      <Link
+        href="/library"
+        className="inline-flex w-fit items-center gap-1 rounded-md text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back to library
+      </Link>
+
+      <div className="grid gap-6 sm:grid-cols-[8rem_minmax(0,1fr)]">
+        <BookCover title={item.title} theme={item.coverTheme} />
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary">{mediaTypeLabel(item.type)}</Badge>
+            {entry ? <Badge variant="outline">{statusLabel(entry.status)}</Badge> : null}
+          </div>
+          <h1 id="item-title" className="text-2xl font-medium">
+            {item.title}
+          </h1>
+          <p className="text-muted-foreground">{item.creator}</p>
+          <p className="text-sm text-muted-foreground">{formatMetaLine(item)}</p>
+          {typeof entry?.rating === "number" ? <StarRating rating={entry.rating} /> : null}
+          {item.description ? <p className="leading-relaxed">{item.description}</p> : null}
+          {tags.length > 0 ? (
+            <ul className="flex flex-wrap gap-1.5">
+              {tags.map((tag) => (
+                <li key={tag}>
+                  <Badge variant="muted">{tag}</Badge>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </div>
+
+      <ItemActions
+        mediaItemId={item.id}
+        entry={
+          entry
+            ? { id: entry.id, status: entry.status, rating: entry.rating, review: entry.review }
+            : null
+        }
+        tags={tags}
+      />
+    </section>
+  );
+}
