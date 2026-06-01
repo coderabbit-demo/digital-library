@@ -2,7 +2,7 @@
 
 > **Jira (Epic [DL-52](https://coderabbit-demo.atlassian.net/browse/DL-52))** — one story per major task:
 > Task 1 → DL-53 · 2 → DL-54 · 3 → DL-55 · 4 → DL-56 · 5 → DL-57 · 6 → DL-58 · 7 → DL-59 · 8 → DL-60 · 9 → DL-61 · 10 → DL-62 · 11 (+12) → DL-63.
-
+>
 > Sequenced foundation → providers → endpoints → UI → supersession → quality.
 > `(P)` marks tasks runnable in parallel (no data dependency, no shared-file contention, no prerequisite review). Each sub-task targets ~1–3 hours.
 > Throughout: additive/non-breaking, keep build + typecheck + tests green; no `any`; no `dangerouslySetInnerHTML`; provider secrets server-side only.
