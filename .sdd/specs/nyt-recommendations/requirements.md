@@ -1,5 +1,13 @@
 # Requirements Document
 
+> **⚠️ Superseded by [`trending-now`](../trending-now/) (Epic DL-52).** This
+> books-only "Recommendations" page was never built. Its substantive
+> requirements — a plain, server-side NYT Best Seller pull with the key read
+> from the environment, plus add-to-shelf — are delivered by the **NYT books
+> provider** under the Trending Now multi-source feed. There is no separate
+> `/recommendations` route or `/api/recommendations` endpoint; discovery lives
+> at `/trending`.
+
 ## Project Description (Input)
 Make the Recommendations page a live pull from the New York Times Best Seller Lists API across all genres (a plain "all lists" pull, with no profile- or history-based re-ranking for now). The page is its own route in the LibraryLoop app. Because the NYT API requires a secret key that must never be exposed to the browser, the live calls are made by a server-side endpoint that reads the key from an environment variable. The API key will be provided in an env file at implementation time. Build on the platform defined by the `home-feed` spec: a TypeScript Next.js (App Router) + React app, a backend of Next.js Route Handlers, PostgreSQL persistence via Drizzle ORM, real authentication, Docker for local development, and Vercel + managed Postgres for production.
 
