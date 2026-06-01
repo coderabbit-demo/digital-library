@@ -5,8 +5,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerMember } from "@/lib/auth/service";
-import { addTrendingItem, type AddTrendingInput } from "./add";
-import { findEntry, listFeed, listMedia } from "@/db/queries";
+import { addTrendingItem, resolveTrendingMedia, type AddTrendingInput } from "./add";
+import { findEntry, listEntriesForUser, listFeed, listMedia } from "@/db/queries";
 import type { Db } from "@/db/client";
 import { createTestDb } from "@/db/test-db";
 
@@ -68,5 +68,27 @@ describe("addTrendingItem (DL-57)", () => {
     expect(bAdd.created).toBe(false); // media reused
     expect(bAdd.alreadyOwned).toBe(false); // but b had no entry
     expect(await findEntry(db, b.id, bAdd.entry.mediaItemId)).not.toBeNull();
+  });
+});
+
+describe("resolveTrendingMedia (DL-67)", () => {
+  const input = { type: "music", title: "Blue", creator: "Joni Mitchell", genre: "Folk", metadata: null };
+
+  it("find-or-creates the media row without a library entry, and de-dups", async () => {
+    const u = await user("a@example.com");
+
+    const first = await db.transaction((tx) => resolveTrendingMedia(tx, input));
+    expect(first.created).toBe(true);
+    expect((await listMedia(db)).filter((m) => m.title === "Blue")).toHaveLength(1);
+    // No library entry was created by resolving.
+    expect(await listEntriesForUser(db, u.id)).toEqual([]);
+
+    // Re-resolving (different casing) returns the same row — no duplicate.
+    const second = await db.transaction((tx) =>
+      resolveTrendingMedia(tx, { ...input, title: "blue", creator: "JONI MITCHELL" }),
+    );
+    expect(second.created).toBe(false);
+    expect(second.id).toBe(first.id);
+    expect((await listMedia(db)).filter((m) => m.title === "Blue")).toHaveLength(1);
   });
 });
