@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { LibraryCard } from "@/components/library/LibraryCard";
-import { MediaTypeFilter } from "@/components/library/MediaTypeFilter";
+import { MediaTypeFilter } from "@/components/media/MediaTypeFilter";
 import { getDb } from "@/db/client";
 import { listEntriesForUser, listMedia, listTagsByEntryIds } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { composeShelfItems } from "@/lib/library-view";
-import { mediaTypeCounts } from "@/lib/media-type";
+import { mediaTypeCounts, resolveActiveType, typeFilterHrefFactory } from "@/lib/media-type";
 
 /** Library (DL-49): the full collection across types, with a media-type filter
  * and per-item actions, preserving shelf behavior (Req 11.1, 8.x). */
@@ -24,9 +24,9 @@ export default async function LibraryPage({
   const tagsByEntry = await listTagsByEntryIds(db, items.map(({ entry }) => entry.id));
 
   const options = mediaTypeCounts(items.map(({ item }) => item));
-  const activeType = options.some((o) => o.value === type) ? (type as string) : "all";
+  const activeType = resolveActiveType(type, options);
   const visible = activeType === "all" ? items : items.filter(({ item }) => item.type === activeType);
-  const hrefFor = (value: string) => (value === "all" ? "/library" : `/library?type=${encodeURIComponent(value)}`);
+  const hrefFor = typeFilterHrefFactory({ basePath: "/library" });
 
   return (
     <section aria-labelledby="library-title" className="flex flex-col gap-4">

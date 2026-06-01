@@ -1,7 +1,9 @@
 /**
- * Media-type filter (DL-47): a segmented pill group with per-type counts and an
- * "All" default, driven entirely by the data (Req 8.2, 8.4). Link-based so it
- * works in server components; the active option is marked with aria-current.
+ * Shared media-type filter (DL-47; relocated for reuse in DL-73): a segmented
+ * pill group with per-type counts and an "All" default, driven entirely by the
+ * data. Link-based so it works in server components; the active option is marked
+ * with aria-current. Reused across the Library, Wishlist, Reviews, Trending
+ * page, and Home Trending section.
  */
 import Link from "next/link";
 import type { MediaTypeCount } from "@/lib/media-type";

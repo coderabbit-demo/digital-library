@@ -7,7 +7,7 @@
   - Add a configurable link builder that, given a surface's base path, an optional query-key, and optional sibling selections to preserve, returns a function producing the filter link for any option — omitting the key for "All" and dropping preserved selections that are "All" or absent, with URL-encoded values.
   - _Requirements: 1.2, 1.6, 1.7, 6.1, 6.2, 7.1_
 
-- [ ] 1.2 Relocate the shared filter control and adopt the helpers on existing surfaces
+- [x] 1.2 Relocate the shared filter control and adopt the helpers on existing surfaces
   - Move the existing media-type filter control to a neutral, feature-agnostic location so any surface can use it without crossing a feature boundary; keep its inputs unchanged.
   - Update the Library page to import the relocated control and to obtain its links from the new configurable link builder, with no change to its current URLs or behavior.
   - _Requirements: 1.1, 6.3, 6.4, 7.1, 7.2_
