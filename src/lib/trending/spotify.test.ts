@@ -33,10 +33,11 @@ describe("spotify music provider (DL-55)", () => {
     expect(items[1]!.artworkUrl).toBeNull(); // http:// dropped
   });
 
-  it("respects the limit and is empty-safe", () => {
+  it("respects the limit and is empty/malformed-safe", () => {
     expect(normalizeNewReleases(payload, 1)).toHaveLength(1);
     expect(normalizeNewReleases({}, 10)).toEqual([]);
     expect(normalizeNewReleases(null, 10)).toEqual([]);
+    expect(normalizeNewReleases({ albums: { items: "nope" } }, 10)).toEqual([]); // non-array items
   });
 
   it("reports configuration from the environment", () => {
@@ -80,5 +81,14 @@ describe("spotify app token cache (DL-55)", () => {
     // Past expiry (3600s - 60s margin) → refreshes.
     expect(await getAppToken(t0 + 3600 * 1000, f)).toBe("tok");
     expect(counter.n).toBe(2);
+  });
+
+  it("coalesces concurrent refreshes into a single token request", async () => {
+    const counter = { n: 0 };
+    const f = tokenFetch(counter);
+    const [a, b] = await Promise.all([getAppToken(1, f), getAppToken(1, f)]);
+    expect(a).toBe("tok");
+    expect(b).toBe("tok");
+    expect(counter.n).toBe(1);
   });
 });

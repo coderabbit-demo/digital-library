@@ -15,16 +15,20 @@ const NEW_RELEASES_URL = "https://api.spotify.com/v1/browse/new-releases";
 const REVALIDATE_SECONDS = 3600;
 const EXPIRY_MARGIN_MS = 60_000;
 const MAX_LIMIT = 50;
+const REQUEST_TIMEOUT_MS = 8000;
 
 interface CachedToken {
   token: string;
   expiresAt: number;
 }
 let cachedToken: CachedToken | null = null;
+/** In-flight refresh, so concurrent misses don't stampede the token endpoint. */
+let pendingToken: Promise<string> | null = null;
 
-/** Test seam: clear the memoized app token. */
+/** Test seam: clear the memoized app token and any in-flight refresh. */
 export function __resetSpotifyToken(): void {
   cachedToken = null;
+  pendingToken = null;
 }
 
 function text(value: unknown): string {
@@ -37,27 +41,39 @@ function httpsOrNull(value: unknown): string | null {
 /** Obtain (or reuse) a client-credentials app token. `now` is injected for tests. */
 export async function getAppToken(now: number, fetchImpl: typeof fetch): Promise<string> {
   if (cachedToken && cachedToken.expiresAt > now) return cachedToken.token;
-  const id = text(process.env.SPOTIFY_CLIENT_ID);
-  const secret = text(process.env.SPOTIFY_CLIENT_SECRET);
-  if (!id || !secret) throw new Error("Spotify credentials are not configured");
+  // Coalesce concurrent refreshes into a single request.
+  if (pendingToken) return pendingToken;
 
-  const basic = Buffer.from(`${id}:${secret}`).toString("base64");
-  const res = await fetchImpl(TOKEN_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${basic}`,
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error(`Spotify token request failed: ${res.status}`);
-  const json = (await res.json()) as { access_token?: string; expires_in?: number };
-  const token = text(json.access_token);
-  if (!token) throw new Error("Spotify token response missing access_token");
-  const ttlSeconds = typeof json.expires_in === "number" ? json.expires_in : 3600;
-  cachedToken = { token, expiresAt: now + ttlSeconds * 1000 - EXPIRY_MARGIN_MS };
-  return token;
+  pendingToken = (async () => {
+    const id = text(process.env.SPOTIFY_CLIENT_ID);
+    const secret = text(process.env.SPOTIFY_CLIENT_SECRET);
+    if (!id || !secret) throw new Error("Spotify credentials are not configured");
+
+    const basic = Buffer.from(`${id}:${secret}`).toString("base64");
+    const res = await fetchImpl(TOKEN_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${basic}`,
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: "grant_type=client_credentials",
+      cache: "no-store",
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+    if (!res.ok) throw new Error(`Spotify token request failed: ${res.status}`);
+    const json = (await res.json()) as { access_token?: string; expires_in?: number };
+    const token = text(json.access_token);
+    if (!token) throw new Error("Spotify token response missing access_token");
+    const ttlSeconds = typeof json.expires_in === "number" ? json.expires_in : 3600;
+    cachedToken = { token, expiresAt: now + ttlSeconds * 1000 - EXPIRY_MARGIN_MS };
+    return token;
+  })();
+
+  try {
+    return await pendingToken;
+  } finally {
+    pendingToken = null;
+  }
 }
 
 interface SpotifyAlbum {
@@ -73,7 +89,8 @@ interface NewReleasesPayload {
 
 /** Pure: New Releases payload → de-duped, capped TrendingItems. */
 export function normalizeNewReleases(payload: unknown, limit: number): TrendingItem[] {
-  const albums = (payload as NewReleasesPayload | null)?.albums?.items ?? [];
+  const rawItems = (payload as NewReleasesPayload | null)?.albums?.items;
+  const albums = Array.isArray(rawItems) ? rawItems : [];
   const seen = new Set<string>();
   const items: TrendingItem[] = [];
 
@@ -120,6 +137,7 @@ export const spotifyMusicProvider: TrendingProvider = {
     const res = await doFetch(`${NEW_RELEASES_URL}?limit=${capped}`, {
       headers: { Authorization: `Bearer ${token}` },
       next: { revalidate: REVALIDATE_SECONDS },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
     if (!res.ok) throw new Error(`Spotify new-releases request failed: ${res.status}`);
     return normalizeNewReleases(await res.json(), limit);
