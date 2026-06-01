@@ -29,6 +29,20 @@ describe("MediaTypeFilter (relocated, DL-73)", () => {
     expect(screen.getByRole("link", { name: /Music/ })).not.toHaveAttribute("aria-current");
   });
 
+  it("displays the per-type counts and the All total (Req 1.2)", () => {
+    const options = countMediaTypes(["podcast", "podcast", "music"]);
+    render(
+      <MediaTypeFilter
+        options={options}
+        activeValue="all"
+        hrefFor={typeFilterHrefFactory({ basePath: "/library" })}
+      />,
+    );
+    expect(screen.getByRole("link", { name: /All/ })).toHaveTextContent("3");
+    expect(screen.getByRole("link", { name: /Podcasts/ })).toHaveTextContent("2");
+    expect(screen.getByRole("link", { name: /Music/ })).toHaveTextContent("1");
+  });
+
   it("uses the provided aria-label for the filter nav", () => {
     render(
       <MediaTypeFilter

@@ -12,7 +12,7 @@
   - Update the Library page to import the relocated control and to obtain its links from the new configurable link builder, with no change to its current URLs or behavior.
   - _Requirements: 1.1, 6.3, 6.4, 7.1, 7.2_
 
-- [ ] 1.3 Cover the shared foundation with tests
+- [x] 1.3 Cover the shared foundation with tests
   - Unit-test the generalized helpers: counts/labels/sorting from raw type strings including the humanized fallback for an unknown type and the empty-input case; active-type resolution passing through known values and defaulting unknown/missing to "All" for both option shapes; the link builder for "All" versus a specific value, custom query-key, and sibling preservation (kept when set, dropped when "All"/absent).
   - Confirm the relocated filter control renders one option per input with its count, marks the active option for assistive technology, and renders each option as a navigable link to the expected target.
   - _Requirements: 1.1, 1.2, 1.6, 1.7, 6.1, 6.2, 6.3, 6.4_
