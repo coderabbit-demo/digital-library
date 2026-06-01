@@ -1,0 +1,127 @@
+/**
+ * Spotify New Releases — the music provider for Trending Now (DL-55).
+ *
+ * Uses the client-credentials OAuth flow (no user login): an app token is
+ * obtained server-side from the credentials and memoized in module scope until
+ * shortly before expiry, then used to fetch New Releases (cached via the Next
+ * Data Cache). Credentials and the token never reach the client.
+ * `normalizeNewReleases` is pure and unit-tested.
+ */
+import type { TrendingItem } from "@/lib/types";
+import type { TrendingFetchOptions, TrendingProvider } from "./provider";
+
+const TOKEN_URL = "https://accounts.spotify.com/api/token";
+const NEW_RELEASES_URL = "https://api.spotify.com/v1/browse/new-releases";
+const REVALIDATE_SECONDS = 3600;
+const EXPIRY_MARGIN_MS = 60_000;
+const MAX_LIMIT = 50;
+
+interface CachedToken {
+  token: string;
+  expiresAt: number;
+}
+let cachedToken: CachedToken | null = null;
+
+/** Test seam: clear the memoized app token. */
+export function __resetSpotifyToken(): void {
+  cachedToken = null;
+}
+
+function text(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+function httpsOrNull(value: unknown): string | null {
+  return typeof value === "string" && value.startsWith("https://") ? value : null;
+}
+
+/** Obtain (or reuse) a client-credentials app token. `now` is injected for tests. */
+export async function getAppToken(now: number, fetchImpl: typeof fetch): Promise<string> {
+  if (cachedToken && cachedToken.expiresAt > now) return cachedToken.token;
+  const id = text(process.env.SPOTIFY_CLIENT_ID);
+  const secret = text(process.env.SPOTIFY_CLIENT_SECRET);
+  if (!id || !secret) throw new Error("Spotify credentials are not configured");
+
+  const basic = Buffer.from(`${id}:${secret}`).toString("base64");
+  const res = await fetchImpl(TOKEN_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "content-type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error(`Spotify token request failed: ${res.status}`);
+  const json = (await res.json()) as { access_token?: string; expires_in?: number };
+  const token = text(json.access_token);
+  if (!token) throw new Error("Spotify token response missing access_token");
+  const ttlSeconds = typeof json.expires_in === "number" ? json.expires_in : 3600;
+  cachedToken = { token, expiresAt: now + ttlSeconds * 1000 - EXPIRY_MARGIN_MS };
+  return token;
+}
+
+interface SpotifyAlbum {
+  id?: string;
+  name?: string;
+  artists?: { name?: string }[];
+  images?: { url?: string }[];
+  external_urls?: { spotify?: string };
+}
+interface NewReleasesPayload {
+  albums?: { items?: SpotifyAlbum[] };
+}
+
+/** Pure: New Releases payload → de-duped, capped TrendingItems. */
+export function normalizeNewReleases(payload: unknown, limit: number): TrendingItem[] {
+  const albums = (payload as NewReleasesPayload | null)?.albums?.items ?? [];
+  const seen = new Set<string>();
+  const items: TrendingItem[] = [];
+
+  for (const album of albums) {
+    const title = text(album.name);
+    if (!title) continue;
+    const id = text(album.id);
+    const dedupKey = id || title.toLowerCase();
+    if (seen.has(dedupKey)) continue;
+    seen.add(dedupKey);
+    const creator =
+      (album.artists ?? [])
+        .map((a) => text(a.name))
+        .filter((n) => n.length > 0)
+        .join(", ") || "Unknown";
+    items.push({
+      source: "spotify",
+      sourceLabel: "Spotify New Releases",
+      mediaType: "music",
+      title,
+      creator,
+      listLabel: "New Releases",
+      rank: null,
+      genre: null,
+      artworkUrl: httpsOrNull(album.images?.[0]?.url),
+      externalUrl: httpsOrNull(album.external_urls?.spotify),
+      externalId: id || null,
+    });
+    if (items.length >= limit) return items;
+  }
+  return items;
+}
+
+export const spotifyMusicProvider: TrendingProvider = {
+  id: "spotify",
+  label: "Spotify New Releases",
+  mediaType: "music",
+  isConfigured: (env) =>
+    text(env.SPOTIFY_CLIENT_ID).length > 0 && text(env.SPOTIFY_CLIENT_SECRET).length > 0,
+  async fetchTrending({ limit, fetchImpl }: TrendingFetchOptions): Promise<TrendingItem[]> {
+    const doFetch = fetchImpl ?? fetch;
+    const token = await getAppToken(Date.now(), doFetch);
+    const capped = Math.min(Math.max(limit, 1), MAX_LIMIT);
+    const res = await doFetch(`${NEW_RELEASES_URL}?limit=${capped}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: REVALIDATE_SECONDS },
+    });
+    if (!res.ok) throw new Error(`Spotify new-releases request failed: ${res.status}`);
+    return normalizeNewReleases(await res.json(), limit);
+  },
+};
