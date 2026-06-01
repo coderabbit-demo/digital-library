@@ -34,6 +34,40 @@ export interface AddTrendingInput {
   metadata: MediaItemMetadata | null;
 }
 
+export interface ResolveTrendingInput {
+  type: string;
+  title: string;
+  creator: string;
+  genre: string;
+  metadata: MediaItemMetadata | null;
+}
+
+/**
+ * Resolve an external (trending) item to a catalog media id WITHOUT creating a
+ * library entry (media-detail DL-67) — so "View details" on a trending item can
+ * open /item/[id]. Find-or-create by the same type-scoped key as the add path;
+ * best-effort de-dup (see DL-64). The caller wraps it in a transaction.
+ */
+export async function resolveTrendingMedia(
+  db: DbExecutor,
+  input: ResolveTrendingInput,
+): Promise<{ id: string; created: boolean }> {
+  const existing = await findMediaByTypeTitleCreator(db, input.type, input.title, input.creator);
+  if (existing) return { id: existing.id, created: false };
+  const media = await insertMediaItem(db, {
+    type: input.type,
+    title: input.title,
+    creator: input.creator,
+    genre: input.genre || "Unknown",
+    language: "English",
+    description: "",
+    coverTheme: pickCoverTheme(`${input.title}-${input.creator}`),
+    metadata: input.metadata,
+    totalUnits: null,
+  });
+  return { id: media.id, created: true };
+}
+
 export async function addTrendingItem(
   db: DbExecutor,
   userId: string,
