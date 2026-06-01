@@ -30,7 +30,37 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
   const router = useRouter();
   const [state, setState] = useState<AddState>(alreadyInLibrary ? "added" : "idle");
   const [error, setError] = useState<string | null>(null);
+  const [opening, setOpening] = useState(false);
   const Icon = TYPE_ICON[item.mediaType] ?? BookOpen;
+
+  // Resolve this external item to a catalog id, then open its detail page.
+  async function openDetails(): Promise<void> {
+    setOpening(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/trending/resolve", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          type: item.mediaType,
+          title: item.title,
+          creator: item.creator,
+          genre: item.genre ?? "",
+        }),
+      });
+      if (!res.ok) {
+        setError("Could not open details.");
+        return;
+      }
+      const data = (await res.json()) as { id?: string };
+      if (data.id) router.push(`/item/${data.id}`);
+      else setError("Could not open details.");
+    } catch {
+      setError("Could not open details.");
+    } finally {
+      setOpening(false);
+    }
+  }
 
   async function add(): Promise<void> {
     setState("adding");
@@ -106,6 +136,15 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
                 {state === "adding" ? "Adding…" : "Add"}
               </Button>
             )}
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={opening}
+              onClick={() => void openDetails()}
+              aria-label={`View details for ${item.title}`}
+            >
+              {opening ? "Opening…" : "Details"}
+            </Button>
             {error ? (
               <span role="alert" className="text-sm text-destructive">
                 {error}

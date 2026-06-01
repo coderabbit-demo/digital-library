@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import {
   BookOpen,
   CheckCircle2,
@@ -97,7 +98,14 @@ export function MediaCard({
         </div>
 
         <div>
-          <h3 className="font-medium leading-tight">{item.title}</h3>
+          <h3 className="font-medium leading-tight">
+            <Link
+              href={`/item/${item.id}`}
+              className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {item.title}
+            </Link>
+          </h3>
           <p className="text-sm text-muted-foreground">{item.creator}</p>
         </div>
 
