@@ -5,9 +5,10 @@
  * provider, and isolates failures. Concrete providers are added here in their
  * own stories: NYT books (DL-54) and Spotify music (DL-55).
  */
+import { nytBooksProvider } from "./nyt";
 import type { TrendingProvider } from "./provider";
 
 export const TRENDING_PROVIDERS: readonly TrendingProvider[] = [
-  // nytBooksProvider,      // DL-54
-  // spotifyMusicProvider,  // DL-55
+  nytBooksProvider, // DL-54 (books)
+  // spotifyMusicProvider,  // DL-55 (music)
 ];
