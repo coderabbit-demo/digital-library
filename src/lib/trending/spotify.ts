@@ -11,7 +11,11 @@ import type { TrendingItem } from "@/lib/types";
 import type { TrendingFetchOptions, TrendingProvider } from "./provider";
 
 const TOKEN_URL = "https://accounts.spotify.com/api/token";
-const NEW_RELEASES_URL = "https://api.spotify.com/v1/browse/new-releases";
+// Spotify's Browse "new releases" endpoint (/v1/browse/new-releases) returns
+// 403 for client-credentials (app) tokens, so we use Search with the `tag:new`
+// filter — albums released in roughly the last two weeks — which works with the
+// app token (no user OAuth) and returns the same { albums: { items } } shape.
+const SEARCH_URL = "https://api.spotify.com/v1/search";
 const REVALIDATE_SECONDS = 3600;
 const EXPIRY_MARGIN_MS = 60_000;
 const MAX_LIMIT = 50;
@@ -134,12 +138,13 @@ export const spotifyMusicProvider: TrendingProvider = {
     const doFetch = fetchImpl ?? fetch;
     const token = await getAppToken(Date.now(), doFetch);
     const capped = Math.min(Math.max(limit, 1), MAX_LIMIT);
-    const res = await doFetch(`${NEW_RELEASES_URL}?limit=${capped}`, {
+    const query = new URLSearchParams({ q: "tag:new", type: "album", limit: String(capped) });
+    const res = await doFetch(`${SEARCH_URL}?${query.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
       next: { revalidate: REVALIDATE_SECONDS },
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
-    if (!res.ok) throw new Error(`Spotify new-releases request failed: ${res.status}`);
+    if (!res.ok) throw new Error(`Spotify search request failed: ${res.status}`);
     return normalizeNewReleases(await res.json(), limit);
   },
 };
