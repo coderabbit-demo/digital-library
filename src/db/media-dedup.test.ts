@@ -111,6 +111,12 @@ describe("0002 dedup migration on pre-existing duplicates", () => {
         INSERT INTO "library_entries" ("id","user_id","media_item_id","status","rating","review") VALUES
           ('00000000-0000-4000-8000-0000000000b1','${U}','${D1}','wishlist',NULL,''),
           ('00000000-0000-4000-8000-0000000000b2','${U}','${D2}','finished',5,'loved it');
+        -- Tags split across both duplicate entries; 'myth' overlaps to exercise ON CONFLICT.
+        INSERT INTO "library_entry_tags" ("entry_id","tag") VALUES
+          ('00000000-0000-4000-8000-0000000000b1','tbr'),
+          ('00000000-0000-4000-8000-0000000000b1','myth'),
+          ('00000000-0000-4000-8000-0000000000b2','myth'),
+          ('00000000-0000-4000-8000-0000000000b2','favorite');
         INSERT INTO "activities" ("user_id","media_item_id","action","detail") VALUES
           ('${U}','${D1}','added','D1'),
           ('${U}','${D2}','finished','D2');
@@ -136,6 +142,14 @@ describe("0002 dedup migration on pre-existing duplicates", () => {
         `SELECT count(*)::text AS count FROM "activities" WHERE "media_item_id" <> '${K}'`,
       );
       expect(orphanActivities.rows[0]?.count).toBe("0");
+
+      // Tags from both collapsed entries are preserved on the survivor, deduped.
+      const tags = await client.query<{ tag: string }>(
+        `SELECT "tag" FROM "library_entry_tags" AS t
+         JOIN "library_entries" AS e ON e."id" = t."entry_id"
+         WHERE e."user_id" = '${U}' ORDER BY "tag"`,
+      );
+      expect(tags.rows.map((r) => r.tag)).toEqual(["favorite", "myth", "tbr"]);
     } finally {
       await client.close();
     }
