@@ -107,6 +107,33 @@ export function validateCustomMedia(body: unknown): CustomMedia | null {
   };
 }
 
+export interface AddTrendingMedia {
+  type: string;
+  title: string;
+  creator: string;
+  genre: string;
+  status: LibraryStatus;
+  metadata: MediaItemMetadata | null;
+}
+export function validateAddTrending(body: unknown): AddTrendingMedia | null {
+  const b = asObject(body);
+  const title = asString(b.title).trim();
+  const creator = asString(b.creator).trim();
+  if (!title || !creator) return null;
+  const type = asString(b.type).trim() || "ebook";
+  if (type.length > MAX_TYPE_LENGTH) return null;
+  const statusRaw = asString(b.status).trim();
+  const status: LibraryStatus = isLibraryStatus(statusRaw) ? statusRaw : "wishlist";
+  return {
+    type,
+    title,
+    creator,
+    genre: asString(b.genre).trim(),
+    status,
+    metadata: parseMediaMetadata(type, b.metadata),
+  };
+}
+
 export interface TagsInput {
   entryId: string;
   tags: string[];
