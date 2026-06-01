@@ -18,7 +18,9 @@ const TOKEN_URL = "https://accounts.spotify.com/api/token";
 const SEARCH_URL = "https://api.spotify.com/v1/search";
 const REVALIDATE_SECONDS = 3600;
 const EXPIRY_MARGIN_MS = 60_000;
-const MAX_LIMIT = 50;
+// Spotify's Search endpoint rejects a `limit` above 10 for the `tag:new` album
+// query ("Invalid limit", 400) — lower than the documented 50 — so cap here.
+const MAX_LIMIT = 10;
 const REQUEST_TIMEOUT_MS = 8000;
 
 interface CachedToken {
