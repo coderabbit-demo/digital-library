@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   parseTypeFilter,
+  validateAddTrending,
   validateCustomMedia,
   validateGoal,
   validateLibraryUpsert,
@@ -91,6 +92,23 @@ describe("v2 request validation (DL-44)", () => {
     expect(music?.type).toBe("music");
     expect(music?.metadata).toEqual({ kind: "music", album: "Blue" });
     expect(music?.tags).toEqual(["folk", "calm"]);
+  });
+
+  it("accepts a trending add with no creator (e.g. TV/movies) and only requires a title", () => {
+    const tv = validateAddTrending({
+      type: "tv_movie",
+      title: "Severance",
+      creator: "",
+      artworkUrl: "https://image.tmdb.org/t/p/w500/sev.jpg",
+    });
+    expect(tv).not.toBeNull();
+    expect(tv?.creator).toBe("");
+    expect(tv?.status).toBe("wishlist");
+    expect(tv?.artworkUrl).toBe("https://image.tmdb.org/t/p/w500/sev.jpg");
+
+    // A title is still required; insecure artwork is dropped.
+    expect(validateAddTrending({ title: "", creator: "x" })).toBeNull();
+    expect(validateAddTrending({ title: "Dune", artworkUrl: "http://insecure/x.jpg" })?.artworkUrl).toBeNull();
   });
 
   it("validates tags input", () => {

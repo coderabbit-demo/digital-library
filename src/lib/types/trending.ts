@@ -10,8 +10,8 @@
  */
 import type { LibraryEntry, LibraryStatus, MediaItemMetadata } from "./domain";
 
-/** Media types currently served by a provider; open to more as providers are added. */
-export type TrendingMediaType = "ebook" | "music";
+/** Media types served by a provider; open to more as providers are added. */
+export type TrendingMediaType = "ebook" | "music" | "podcast" | "tv_movie";
 
 /** One normalized trending entry from any provider. */
 export interface TrendingItem {

@@ -10,6 +10,7 @@ import { getDb } from "@/db/client";
 import { findEntry, findMediaById, listTagsByEntryIds } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { isSupportedCoverType } from "@/lib/covers/resolve";
+import { itemBackTarget } from "@/lib/item-nav";
 import { statusLabel } from "@/lib/library-view";
 import { formatMetaLine } from "@/lib/media-metadata";
 import { mediaTypeLabel } from "@/lib/media-type";
@@ -21,13 +22,17 @@ import { mediaTypeLabel } from "@/lib/media-type";
  */
 export default async function ItemPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 }): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const { id } = await params;
+  const { from } = await searchParams;
+  const back = itemBackTarget(from);
   const db = getDb();
   const item = await findMediaById(db, id);
   if (!item) notFound();
@@ -42,11 +47,11 @@ export default async function ItemPage({
   return (
     <section aria-labelledby="item-title" className="flex flex-col gap-6">
       <Link
-        href="/library"
+        href={back.href}
         className="inline-flex w-fit items-center gap-1 rounded-md text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
-        Back to library
+        Back to {back.label}
       </Link>
 
       <div className="grid gap-6 sm:grid-cols-[8rem_minmax(0,1fr)]">
