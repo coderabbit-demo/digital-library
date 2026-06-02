@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Shared media-type filter foundation
+- [x] 1. Shared media-type filter foundation
 - [x] 1.1 Generalize the shared media-type helpers
   - Add the ability to build per-type option counts from a plain list of media-type strings, so both library items and trending items (which expose their type under a different field) are supported, and have the existing item-based count helper reuse it.
   - Broaden active-type resolution so it accepts either the plain option list or the counted option list, always falling back to "All" for an unknown or missing value.
@@ -28,7 +28,7 @@
   - Keep the feed fetched once with no type argument so filtering never changes which external sources are queried.
   - _Requirements: 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 6.1, 6.2, 6.3, 6.4, 6.5, 7.3_
 
-- [ ] 4. Home page dual filter and Trending section
+- [x] 4. Home page dual filter and Trending section
 - [x] 4.1 Make the Home page carry two independent filters
   - Read both the community-feed selection and a separate Home Trending-section selection from the page URL using distinct query keys, and resolve each independently.
   - Build each control's links with the configurable link builder so selecting one control preserves the other's current selection, leaving the existing community-feed filter behavior otherwise unchanged.
@@ -40,7 +40,7 @@
   - Verify selecting a section option does not alter the community-feed selection and vice versa.
   - _Requirements: 1.3, 1.4, 1.5, 3.1, 3.2, 3.4, 6.5_
 
-- [ ] 5. Wishlist and Reviews filters
+- [x] 5. Wishlist and Reviews filters
 - [x] 5.1 (P) Add the media-type filter to the Wishlist
   - Read the selected type from the page URL, build options and counts from the user's wishlist items, resolve the active selection (default "All"), render the shared control with wishlist-route links, show only matching items for a specific type and all items for "All", and show an empty state when nothing matches.
   - _Requirements: 1.3, 1.4, 1.5, 4.1, 4.2, 4.3, 6.1, 6.2, 6.3, 6.4, 6.5_
@@ -49,7 +49,7 @@
   - Read the selected type from the page URL, build options and counts from the user's reviewed items, resolve the active selection (default "All"), render the shared control with reviews-route links, show only matching reviewed items for a specific type and all for "All", and show an empty state when nothing matches.
   - _Requirements: 1.3, 1.4, 1.5, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 6. Consistency note and full verification
+- [x] 6. Consistency note and full verification
 - [x] 6.1 Record the trending filtering clarification
   - Add a clarifying note to the trending-now specification stating that this user-initiated media-type filtering is distinct from, and does not contradict, the requirement that trending results are a plain pull without profile-based filtering.
   - _Requirements: 7.3, 7.4_
