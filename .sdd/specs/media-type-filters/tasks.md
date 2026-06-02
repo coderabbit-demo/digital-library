@@ -50,7 +50,7 @@
   - _Requirements: 1.3, 1.4, 1.5, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3, 6.4, 6.5_
 
 - [ ] 6. Consistency note and full verification
-- [ ] 6.1 Record the trending filtering clarification
+- [x] 6.1 Record the trending filtering clarification
   - Add a clarifying note to the trending-now specification stating that this user-initiated media-type filtering is distinct from, and does not contradict, the requirement that trending results are a plain pull without profile-based filtering.
   - _Requirements: 7.3, 7.4_
 
