@@ -6,6 +6,7 @@ import { BookOpen, Check, Music, Plus, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CoverThumb } from "@/components/ui/CoverThumb";
 import { sendJson } from "@/lib/api/client";
 import { mediaTypeLabel } from "@/lib/media-type";
 import type { TrendingItem } from "@/lib/types";
@@ -46,6 +47,7 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
           title: item.title,
           creator: item.creator,
           genre: item.genre ?? "",
+          artworkUrl: item.artworkUrl,
         }),
       });
       if (!res.ok) {
@@ -71,6 +73,7 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
       creator: item.creator,
       genre: item.genre ?? "",
       status: "wishlist",
+      artworkUrl: item.artworkUrl,
     });
     if (result.ok) {
       setState("added");
@@ -84,25 +87,7 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
   return (
     <Card>
       <CardContent className="flex gap-3 p-4">
-        {item.artworkUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- external art from arbitrary provider hosts; next/image would require broad remotePatterns
-          <img
-            src={item.artworkUrl}
-            alt=""
-            width={64}
-            height={64}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            className="size-16 shrink-0 rounded-md object-cover"
-          />
-        ) : (
-          <div
-            aria-hidden="true"
-            className="grid size-16 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"
-          >
-            <Icon className="size-6" />
-          </div>
-        )}
+        <CoverThumb src={item.artworkUrl} Icon={Icon} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary" className="gap-1">

@@ -21,6 +21,8 @@ const media: MediaItemRow = {
   language: "English",
   description: "",
   coverTheme: "gold",
+  artworkUrl: null,
+  artworkCheckedAt: null,
   metadata: null,
   totalUnits: null,
 };

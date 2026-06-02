@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { CoverResolver } from "@/components/item/CoverResolver";
 import { ItemActions } from "@/components/item/ItemActions";
 import { Badge } from "@/components/ui/badge";
 import { BookCover } from "@/components/ui/BookCover";
@@ -8,6 +9,7 @@ import { StarRating } from "@/components/ui/StarRating";
 import { getDb } from "@/db/client";
 import { findEntry, findMediaById, listTagsByEntryIds } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
+import { isSupportedCoverType } from "@/lib/covers/resolve";
 import { statusLabel } from "@/lib/library-view";
 import { formatMetaLine } from "@/lib/media-metadata";
 import { mediaTypeLabel } from "@/lib/media-type";
@@ -33,6 +35,10 @@ export default async function ItemPage({
   const entry = await findEntry(db, user.id, id);
   const tags = entry ? ((await listTagsByEntryIds(db, [entry.id])).get(entry.id) ?? []) : [];
 
+  // First view of an art-less, never-checked, supported item: resolve its cover
+  // on demand (the placeholder shows until it lands). Cached thereafter.
+  const needsCover = !item.artworkUrl && !item.artworkCheckedAt && isSupportedCoverType(item.type);
+
   return (
     <section aria-labelledby="item-title" className="flex flex-col gap-6">
       <Link
@@ -44,7 +50,8 @@ export default async function ItemPage({
       </Link>
 
       <div className="grid gap-6 sm:grid-cols-[8rem_minmax(0,1fr)]">
-        <BookCover title={item.title} theme={item.coverTheme} />
+        <BookCover title={item.title} theme={item.coverTheme} imageUrl={item.artworkUrl} />
+        {needsCover ? <CoverResolver mediaItemId={item.id} /> : null}
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{mediaTypeLabel(item.type)}</Badge>

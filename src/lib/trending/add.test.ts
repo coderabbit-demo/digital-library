@@ -6,7 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerMember } from "@/lib/auth/service";
 import { addTrendingItem, resolveTrendingMedia, type AddTrendingInput } from "./add";
-import { findEntry, listEntriesForUser, listFeed, listMedia } from "@/db/queries";
+import { findEntry, findMediaById, listEntriesForUser, listFeed, listMedia } from "@/db/queries";
 import type { Db } from "@/db/client";
 import { createTestDb } from "@/db/test-db";
 
@@ -57,6 +57,31 @@ describe("addTrendingItem (DL-57)", () => {
 
     // Activity recorded → shows in the community feed.
     expect((await listFeed(db)).some((e) => e.itemTitle === "Circe")).toBe(true);
+  });
+
+  it("persists provider artwork on create and fills a missing cover without overwriting (cover-art Req 3)", async () => {
+    const u = await user("a@example.com");
+
+    // First add carries provider artwork → persisted on the new row.
+    const first = await db.transaction((tx) =>
+      addTrendingItem(tx, u.id, { ...circe, artworkUrl: "https://art/circe.jpg" }, at),
+    );
+    expect((await findMediaById(db, first.entry.mediaItemId))?.artworkUrl).toBe("https://art/circe.jpg");
+
+    // A later add with different art must NOT overwrite the existing cover.
+    await db.transaction((tx) =>
+      addTrendingItem(tx, u.id, { ...circe, artworkUrl: "https://art/other.jpg" }, at),
+    );
+    expect((await findMediaById(db, first.entry.mediaItemId))?.artworkUrl).toBe("https://art/circe.jpg");
+  });
+
+  it("fills a missing cover on an existing art-less row from a later add", async () => {
+    const u = await user("a@example.com");
+    const first = await db.transaction((tx) => addTrendingItem(tx, u.id, circe, at)); // no artwork
+    expect((await findMediaById(db, first.entry.mediaItemId))?.artworkUrl).toBeNull();
+
+    await db.transaction((tx) => addTrendingItem(tx, u.id, { ...circe, artworkUrl: "https://art/late.jpg" }, at));
+    expect((await findMediaById(db, first.entry.mediaItemId))?.artworkUrl).toBe("https://art/late.jpg");
   });
 
   it("scopes ownership per user (a second user's add is their own)", async () => {

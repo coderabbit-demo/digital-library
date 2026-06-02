@@ -8,7 +8,7 @@
  * own. Execution against a real database is covered by integration tests once
  * the Docker Postgres lands (DL-17).
  */
-import { and, count, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import type {
   Activity,
   ActivityAction,
@@ -182,12 +182,47 @@ export async function findMediaByTypeTitleCreator(
   return row ? toMediaItem(row) : null;
 }
 
+/**
+ * Fields accepted when creating a media row. `artworkCheckedAt` is a
+ * resolver-managed timestamp (set via updateMediaArtwork), not a creation input,
+ * so it is excluded here; `artworkUrl` may be supplied (e.g. provider art on a
+ * trending add).
+ */
+export type MediaCreateInput = Omit<MediaItem, "id" | "artworkCheckedAt">;
+
 export async function insertMediaItem(db: DbExecutor,
-  input: Omit<MediaItem, "id">,
+  input: MediaCreateInput,
 ): Promise<MediaItem> {
   const [row] = await db.insert(mediaItems).values(input).returning();
   if (!row) throw new Error("insertMediaItem returned no row");
   return toMediaItem(row);
+}
+
+/** Set (or clear) a media item's resolved cover and stamp the resolution
+ *  attempt, so the lookup is not repeated once an outcome is known (cover-art
+ *  Req 4.2, 4.5). */
+export async function updateMediaArtwork(
+  db: DbExecutor,
+  id: string,
+  artworkUrl: string | null,
+  checkedAt: Date,
+): Promise<void> {
+  await db
+    .update(mediaItems)
+    .set({ artworkUrl, artworkCheckedAt: checkedAt })
+    .where(eq(mediaItems.id, id));
+}
+
+/** Media rows that still need a cover: never attempted and without artwork
+ *  (cover-art Req 4.1). Ordered by id for deterministic batch backfill. */
+export async function findMediaNeedingCover(db: DbExecutor, limit: number): Promise<MediaItem[]> {
+  const rows = await db
+    .select()
+    .from(mediaItems)
+    .where(and(isNull(mediaItems.artworkUrl), isNull(mediaItems.artworkCheckedAt)))
+    .orderBy(mediaItems.id)
+    .limit(limit);
+  return rows.map(toMediaItem);
 }
 
 /**
@@ -198,7 +233,7 @@ export async function insertMediaItem(db: DbExecutor,
  */
 export async function findOrCreateMedia(
   db: DbExecutor,
-  input: Omit<MediaItem, "id">,
+  input: MediaCreateInput,
 ): Promise<{ media: MediaItem; created: boolean }> {
   const [inserted] = await db.insert(mediaItems).values(input).onConflictDoNothing().returning();
   if (inserted) return { media: toMediaItem(inserted), created: true };

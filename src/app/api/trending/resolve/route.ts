@@ -38,6 +38,7 @@ export async function POST(request: Request): Promise<NextResponse<ResolveRespon
         creator: input.creator,
         genre: input.genre,
         metadata: input.metadata,
+        artworkUrl: input.artworkUrl,
       }),
     );
     return NextResponse.json({ id });
