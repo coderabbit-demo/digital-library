@@ -114,6 +114,8 @@ export interface AddTrendingMedia {
   genre: string;
   status: LibraryStatus;
   metadata: MediaItemMetadata | null;
+  /** Provider cover art (https only); null when absent/insecure (cover-art Req 3.1). */
+  artworkUrl: string | null;
 }
 export function validateAddTrending(body: unknown): AddTrendingMedia | null {
   const b = asObject(body);
@@ -124,6 +126,7 @@ export function validateAddTrending(body: unknown): AddTrendingMedia | null {
   if (type.length > MAX_TYPE_LENGTH) return null;
   const statusRaw = asString(b.status).trim();
   const status: LibraryStatus = isLibraryStatus(statusRaw) ? statusRaw : "wishlist";
+  const artworkRaw = asString(b.artworkUrl).trim();
   return {
     type,
     title,
@@ -131,6 +134,7 @@ export function validateAddTrending(body: unknown): AddTrendingMedia | null {
     genre: asString(b.genre).trim(),
     status,
     metadata: parseMediaMetadata(type, b.metadata),
+    artworkUrl: artworkRaw.startsWith("https://") ? artworkRaw : null,
   };
 }
 

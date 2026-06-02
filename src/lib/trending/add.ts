@@ -11,10 +11,11 @@ import {
   findEntry,
   findOrCreateMedia,
   insertActivity,
+  updateMediaArtwork,
   upsertEntryStatus,
 } from "@/db/queries";
 import { actionForStatus, detailForStatus } from "@/lib/activity";
-import type { AddTrendingResponse, LibraryStatus, MediaItemMetadata } from "@/lib/types";
+import type { AddTrendingResponse, LibraryStatus, MediaItem, MediaItemMetadata } from "@/lib/types";
 
 const COVER_THEMES = ["teal", "gold", "coral", "green", "violet", "navy", "crimson", "indigo"];
 
@@ -31,6 +32,8 @@ export interface AddTrendingInput {
   genre: string;
   status: LibraryStatus;
   metadata: MediaItemMetadata | null;
+  /** Provider cover art (https); persisted on create / fills a missing one (cover-art Req 3). */
+  artworkUrl?: string | null;
 }
 
 export interface ResolveTrendingInput {
@@ -39,6 +42,24 @@ export interface ResolveTrendingInput {
   creator: string;
   genre: string;
   metadata: MediaItemMetadata | null;
+  artworkUrl?: string | null;
+}
+
+/**
+ * Persist provider artwork onto a found-or-created media row (cover-art Req 3):
+ * `created` rows already carry it from the insert; for an existing row that
+ * lacks art, fill it from the provider — but never overwrite art already there.
+ */
+async function fillMissingArtwork(
+  db: DbExecutor,
+  media: MediaItem,
+  created: boolean,
+  artworkUrl: string | null | undefined,
+  now: Date,
+): Promise<void> {
+  if (!created && artworkUrl && !media.artworkUrl) {
+    await updateMediaArtwork(db, media.id, artworkUrl, now);
+  }
 }
 
 /**
@@ -59,9 +80,11 @@ export async function resolveTrendingMedia(
     language: "English",
     description: "",
     coverTheme: pickCoverTheme(`${input.title}-${input.creator}`),
+    artworkUrl: input.artworkUrl ?? null,
     metadata: input.metadata,
     totalUnits: null,
   });
+  await fillMissingArtwork(db, media, created, input.artworkUrl, new Date());
   return { id: media.id, created };
 }
 
@@ -81,9 +104,11 @@ export async function addTrendingItem(
     language: "English",
     description: "",
     coverTheme: pickCoverTheme(`${input.title}-${input.creator}`),
+    artworkUrl: input.artworkUrl ?? null,
     metadata: input.metadata,
     totalUnits: null,
   });
+  await fillMissingArtwork(db, media, created, input.artworkUrl, now);
 
   const owned = await findEntry(db, userId, media.id);
   const alreadyOwned = owned !== null;

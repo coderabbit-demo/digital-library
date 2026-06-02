@@ -46,6 +46,7 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
           title: item.title,
           creator: item.creator,
           genre: item.genre ?? "",
+          artworkUrl: item.artworkUrl,
         }),
       });
       if (!res.ok) {
@@ -71,6 +72,7 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
       creator: item.creator,
       genre: item.genre ?? "",
       status: "wishlist",
+      artworkUrl: item.artworkUrl,
     });
     if (result.ok) {
       setState("added");
