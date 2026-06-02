@@ -19,7 +19,12 @@ import {
 import { evaluateAchievements } from "@/lib/achievements";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { computeGoalProgress, DEFAULT_GOAL_PERIOD } from "@/lib/goals";
-import { distinctMediaTypes, mediaTypeOptions, resolveActiveType } from "@/lib/media-type";
+import {
+  distinctMediaTypes,
+  mediaTypeOptions,
+  resolveActiveType,
+  typeFilterHrefFactory,
+} from "@/lib/media-type";
 import { computeStreaks } from "@/lib/streaks";
 import { computeUserStats } from "@/lib/stats";
 import { ownedTrendingKeys } from "@/lib/trending/ownership";
@@ -32,12 +37,12 @@ import { ownedTrendingKeys } from "@/lib/trending/ownership";
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; trending?: string }>;
 }): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
-  const { type } = await searchParams;
+  const { type, trending } = await searchParams;
   const db = getDb();
   const now = new Date();
   const year = String(now.getUTCFullYear());
@@ -65,6 +70,14 @@ export default async function HomePage({
   const activeType = resolveActiveType(type, options);
   const feed = await listFeed(db, activeType === "all" ? {} : { type: activeType });
   const ownedTrending = ownedTrendingKeys(entries, media);
+  // The community feed uses `?type=`; the Trending section (DL-73) uses
+  // `?trending=`. Each control preserves the other's selection so they filter
+  // independently on this shared route (Req 3.3).
+  const feedHrefFor = typeFilterHrefFactory({
+    basePath: "/",
+    param: "type",
+    preserve: { trending },
+  });
 
   return (
     <>
@@ -77,7 +90,7 @@ export default async function HomePage({
           <CardTitle id="feed-title">Community feed</CardTitle>
         </CardHeader>
         <CardContent>
-          <FeedFilter options={options} activeValue={activeType} />
+          <FeedFilter options={options} activeValue={activeType} hrefFor={feedHrefFor} />
           <Feed entries={feed} />
         </CardContent>
       </Card>

@@ -29,7 +29,7 @@
   - _Requirements: 1.3, 1.4, 1.5, 2.1, 2.2, 2.3, 2.4, 6.1, 6.2, 6.3, 6.4, 6.5, 7.3_
 
 - [ ] 4. Home page dual filter and Trending section
-- [ ] 4.1 Make the Home page carry two independent filters
+- [x] 4.1 Make the Home page carry two independent filters
   - Read both the community-feed selection and a separate Home Trending-section selection from the page URL using distinct query keys, and resolve each independently.
   - Build each control's links with the configurable link builder so selecting one control preserves the other's current selection, leaving the existing community-feed filter behavior otherwise unchanged.
   - _Requirements: 3.3, 6.1, 6.2, 7.1, 7.2_

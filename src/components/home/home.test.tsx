@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { FeedEntryDTO } from "@/lib/types";
-import { mediaTypeOptions } from "@/lib/media-type";
+import { mediaTypeOptions, typeFilterHrefFactory } from "@/lib/media-type";
 import type { AchievementView } from "@/lib/achievements";
 import { DashboardHeader } from "./DashboardHeader";
 import { StatCards } from "./StatCards";
@@ -99,5 +99,21 @@ describe("home dashboard (DL-48)", () => {
     const all = screen.getByRole("link", { name: "All" });
     expect(all).toHaveAttribute("aria-current", "true");
     expect(screen.getByRole("link", { name: "Books" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("defaults its links to the home type query (DL-31 behavior preserved)", () => {
+    render(<FeedFilter options={mediaTypeOptions(["ebook"])} activeValue="all" />);
+    expect(screen.getByRole("link", { name: "All" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "Books" })).toHaveAttribute("href", "/?type=ebook");
+  });
+
+  it("uses a provided hrefFor that preserves the trending selection (DL-73)", () => {
+    const hrefFor = typeFilterHrefFactory({ basePath: "/", param: "type", preserve: { trending: "music" } });
+    render(<FeedFilter options={mediaTypeOptions(["ebook"])} activeValue="all" hrefFor={hrefFor} />);
+    expect(screen.getByRole("link", { name: "All" })).toHaveAttribute("href", "/?trending=music");
+    expect(screen.getByRole("link", { name: "Books" })).toHaveAttribute(
+      "href",
+      "/?trending=music&type=ebook",
+    );
   });
 });
