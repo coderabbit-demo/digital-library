@@ -31,7 +31,10 @@ async function main(): Promise<void> {
   const attempted = new Set<string>();
 
   for (;;) {
-    const batch = await findMediaNeedingCover(db, BATCH);
+    // findMediaNeedingCover has no cursor and a failed row stays eligible
+    // (unstamped). Widen the window by the number already attempted so stuck
+    // leading rows can't crowd out fresh ones and cause premature termination.
+    const batch = await findMediaNeedingCover(db, BATCH + attempted.size);
     const fresh = batch.filter((item) => !attempted.has(item.id));
     if (fresh.length === 0) break; // nothing left, or only stuck rows → stop
 
