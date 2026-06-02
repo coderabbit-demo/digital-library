@@ -50,6 +50,8 @@ Requirements define WHAT Trending Now must achieve; concrete provider clients, e
 4. If the same item appears more than once within a source's lists, the application shall avoid rendering it as a confusingly exact duplicate (for example, by de-duplicating or clearly attributing each listing).
 5. The application shall present trending content for each supported media type using the platform's enriched media-card visual language, with a clear source/ranking indicator.
 
+> **Note (media-type-filters, DL-73):** Criterion 3.2 concerns *automatic* personalization — trending is not re-ranked or narrowed by the reader's profile preferences or library history. The separate `media-type-filters` feature adds a *user-initiated* media-type filter to the trending surfaces (and other media lists). That filter is an explicit reader choice applied to the already-pulled results; it is not profile-based filtering and does not re-query providers, so it is distinct from and does not contradict this requirement.
+
 ### Requirement 4: Server-side provider clients and secret handling
 
 **Objective:** As a maintainer, I want all provider access mediated server-side, so that secrets never reach the browser and the integration is secure.

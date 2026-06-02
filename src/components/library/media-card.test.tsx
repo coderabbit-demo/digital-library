@@ -1,14 +1,12 @@
 /**
- * Component tests (DL-47) for the enriched media card and the media-type
- * filter: card anatomy + accessible rating, and the filter's counts/active
- * state.
+ * Component tests (DL-47) for the enriched media card: card anatomy + accessible
+ * rating and the actions menu. (The media-type filter moved to
+ * components/media and is covered by media-type-filter.test.tsx — DL-73.)
  */
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MediaCard } from "./MediaCard";
-import { MediaTypeFilter } from "./MediaTypeFilter";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { mediaTypeCounts } from "@/lib/media-type";
 import type { MediaItem } from "@/lib/types";
 
 const podcast: MediaItem = {
@@ -55,20 +53,5 @@ describe("MediaCard (DL-47)", () => {
     expect(
       screen.getByRole("button", { name: "Actions for 99% Invisible" }),
     ).toBeInTheDocument();
-  });
-});
-
-describe("MediaTypeFilter (DL-47)", () => {
-  it("renders an option per type with counts and marks the active one", () => {
-    const options = mediaTypeCounts([podcast, { ...podcast, id: "p2", type: "music" }]);
-    render(<MediaTypeFilter options={options} activeValue="all" hrefFor={(v) => `/library?type=${v}`} />);
-
-    const all = screen.getByRole("link", { name: /All/ });
-    expect(all).toHaveAttribute("aria-current", "true");
-    expect(all).toHaveAttribute("href", "/library?type=all");
-    expect(screen.getByRole("link", { name: /Podcasts/ })).toHaveAttribute(
-      "href",
-      "/library?type=podcast",
-    );
   });
 });

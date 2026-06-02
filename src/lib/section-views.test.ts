@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { LibraryEntry, MediaItem } from "@/lib/types";
-import { composeShelfItems, filterShelfItems, resolveShelf } from "./library-view";
+import { composeShelfItems, filterShelfItems, filterShelfItemsByType, resolveShelf } from "./library-view";
 import { distinctGenres, filterByGenre, resolveGenre } from "./catalog-view";
 import { joinList, splitList } from "./preferences-format";
 
@@ -37,6 +37,17 @@ describe("shelves view (DL-32)", () => {
     expect(filterShelfItems(items, "all")).toHaveLength(2);
     expect(resolveShelf("nope")).toBe("all");
     expect(resolveShelf("finished")).toBe("finished");
+  });
+
+  it("filters shelf items by media type, passing through 'all' (DL-73)", () => {
+    const items = composeShelfItems(
+      [entry("a", "wishlist"), entry("b", "wishlist")],
+      [{ ...media("a"), type: "ebook" }, { ...media("b"), type: "music" }],
+    );
+    expect(filterShelfItemsByType(items, "all")).toHaveLength(2);
+    const music = filterShelfItemsByType(items, "music");
+    expect(music).toHaveLength(1);
+    expect(music[0]?.item.id).toBe("b");
   });
 });
 
