@@ -34,7 +34,7 @@
   - Build each control's links with the configurable link builder so selecting one control preserves the other's current selection, leaving the existing community-feed filter behavior otherwise unchanged.
   - _Requirements: 3.3, 6.1, 6.2, 7.1, 7.2_
 
-- [ ] 4.2 Make the Home Trending section filterable
+- [x] 4.2 Make the Home Trending section filterable
   - Accept the section's active selection and link builder, derive the section's options from the media types present in its own trending items, apply the narrowing before limiting to the preview size, and render the shared filter control above the preview.
   - Carry the active selection through the section's "see all" link so the Trending page opens with the same media type applied; show the section's empty state when the selection matches nothing.
   - Verify selecting a section option does not alter the community-feed selection and vice versa.

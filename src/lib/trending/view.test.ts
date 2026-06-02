@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TrendingItem, TrendingResponse, TrendingSourceResult } from "@/lib/types";
-import { buildTrendingView } from "./view";
+import { buildTrendingSectionView, buildTrendingView } from "./view";
 
 function mkItem(mediaType: TrendingItem["mediaType"], title: string): TrendingItem {
   return {
@@ -68,5 +68,31 @@ describe("buildTrendingView (DL-73)", () => {
     const view = buildTrendingView(down, undefined);
     expect(view.hasItems).toBe(false);
     expect(view.options).toEqual([{ value: "all", label: "All", count: 0 }]);
+  });
+});
+
+describe("buildTrendingSectionView (DL-73)", () => {
+  it("flattens ok items, builds options, and slices the preview for 'all'", () => {
+    const view = buildTrendingSectionView(feed(), undefined, 2);
+    expect(view.activeType).toBe("all");
+    expect(view.options.map((o) => o.value)).toEqual(["all", "ebook", "music"]);
+    // first two items across healthy sources
+    expect(view.items.map((i) => i.title)).toEqual(["b1", "b2"]);
+  });
+
+  it("narrows by type BEFORE slicing to the preview limit (Req 3.2)", () => {
+    const f: TrendingResponse = {
+      sources: [
+        source({ source: "nyt", items: [mkItem("ebook", "b1"), mkItem("ebook", "b2"), mkItem("ebook", "b3")] }),
+        source({ source: "spotify", mediaType: "music", items: [mkItem("music", "a1")] }),
+      ],
+    };
+    const view = buildTrendingSectionView(f, "music", 2);
+    expect(view.activeType).toBe("music");
+    expect(view.items.map((i) => i.title)).toEqual(["a1"]);
+  });
+
+  it("falls back to all for a type not present in the section's items", () => {
+    expect(buildTrendingSectionView(feed(), "podcast", 8).activeType).toBe("all");
   });
 });

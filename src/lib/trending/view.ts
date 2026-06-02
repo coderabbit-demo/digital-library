@@ -7,8 +7,12 @@
  * all", surfaced via `hasItems`.
  */
 import { countMediaTypes, resolveActiveType, type MediaTypeCount } from "@/lib/media-type";
-import type { TrendingResponse, TrendingSourceResult } from "@/lib/types";
+import type { TrendingItem, TrendingResponse, TrendingSourceResult } from "@/lib/types";
 import { filterTrendingFeed } from "./filter";
+
+function okItems(feed: TrendingResponse): TrendingItem[] {
+  return feed.sources.filter((source) => source.status === "ok").flatMap((source) => source.items);
+}
 
 export interface TrendingView {
   /** "All" + one option per present media type, with counts. */
@@ -27,16 +31,41 @@ export function buildTrendingView(
   feed: TrendingResponse,
   rawType: string | undefined,
 ): TrendingView {
-  const okTypes = feed.sources
-    .filter((source) => source.status === "ok")
-    .flatMap((source) => source.items.map((item) => item.mediaType));
-  const options = countMediaTypes(okTypes);
+  const items = okItems(feed);
+  const options = countMediaTypes(items.map((item) => item.mediaType));
   const activeType = resolveActiveType(rawType, options);
   return {
     options,
     activeType,
     sources: filterTrendingFeed(feed, activeType).sources,
     showStatusNotices: activeType === "all",
-    hasItems: okTypes.length > 0,
+    hasItems: items.length > 0,
   };
+}
+
+export interface TrendingSectionView {
+  /** "All" + one option per present media type, with counts. */
+  options: MediaTypeCount[];
+  /** Resolved active selection; "all" by default and for unknown/absent values. */
+  activeType: string;
+  /** Preview items: narrowed by the active type (Req 3.2), then sliced to `limit`. */
+  items: TrendingItem[];
+}
+
+/**
+ * View-model for the Home Trending section's filter (media-type-filters DL-73).
+ * Flattens healthy-source items, derives data-driven options, resolves the
+ * active selection, and narrows BEFORE slicing to the preview `limit` so the
+ * preview reflects the selected type rather than a pre-sliced subset.
+ */
+export function buildTrendingSectionView(
+  feed: TrendingResponse,
+  rawType: string | undefined,
+  limit: number,
+): TrendingSectionView {
+  const items = okItems(feed);
+  const options = countMediaTypes(items.map((item) => item.mediaType));
+  const activeType = resolveActiveType(rawType, options);
+  const narrowed = activeType === "all" ? items : items.filter((item) => item.mediaType === activeType);
+  return { options, activeType, items: narrowed.slice(0, limit) };
 }

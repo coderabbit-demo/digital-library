@@ -78,13 +78,18 @@ export default async function HomePage({
     param: "type",
     preserve: { trending },
   });
+  const trendingHrefFor = typeFilterHrefFactory({
+    basePath: "/",
+    param: "trending",
+    preserve: { type: activeType },
+  });
 
   return (
     <>
       <DashboardHeader userName={user.name} />
       <StatCards stats={stats} goalProgress={goalProgress} streaks={streaks} />
       <AchievementsSection achievements={achievements} />
-      <TrendingSection owned={ownedTrending} />
+      <TrendingSection owned={ownedTrending} activeType={trending ?? "all"} hrefFor={trendingHrefFor} />
       <Card>
         <CardHeader>
           <CardTitle id="feed-title">Community feed</CardTitle>
