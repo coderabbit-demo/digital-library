@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CoverThumb } from "@/components/ui/CoverThumb";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,61 +74,64 @@ export function MediaCard({
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-2 p-4">
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className={cn("gap-1", typeStyle.className)}>
-            <TypeIcon aria-hidden="true" />
-            {mediaTypeLabel(item.type)}
-          </Badge>
-          {statusMeta && StatusIcon ? (
-            <Badge variant="outline" className="gap-1">
-              <StatusIcon aria-hidden="true" />
-              {statusMeta.label}
+      <CardContent className="flex gap-3 p-4">
+        <CoverThumb src={item.artworkUrl} Icon={TypeIcon} />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className={cn("gap-1", typeStyle.className)}>
+              <TypeIcon aria-hidden="true" />
+              {mediaTypeLabel(item.type)}
             </Badge>
+            {statusMeta && StatusIcon ? (
+              <Badge variant="outline" className="gap-1">
+                <StatusIcon aria-hidden="true" />
+                {statusMeta.label}
+              </Badge>
+            ) : null}
+            {actions ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-auto size-8" aria-label={`Actions for ${item.title}`}>
+                    <MoreVertical aria-hidden="true" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">{actions}</DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </div>
+
+          <div>
+            <h3 className="font-medium leading-tight">
+              <Link
+                href={`/item/${item.id}`}
+                className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                {item.title}
+              </Link>
+            </h3>
+            <p className="text-sm text-muted-foreground">{item.creator}</p>
+          </div>
+
+          <p className="text-sm text-muted-foreground">{formatMetaLine(item)}</p>
+
+          {typeof rating === "number" ? <StarRating rating={rating} /> : null}
+
+          {review ? (
+            <blockquote className="border-l-2 border-border pl-3 text-sm italic text-muted-foreground">
+              {review}
+            </blockquote>
           ) : null}
-          {actions ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="ml-auto size-8" aria-label={`Actions for ${item.title}`}>
-                  <MoreVertical aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">{actions}</DropdownMenuContent>
-            </DropdownMenu>
+
+          {tags && tags.length > 0 ? (
+            <ul className="flex flex-wrap gap-1.5 pt-1">
+              {tags.map((tag) => (
+                <li key={tag}>
+                  <Badge variant="muted">{tag}</Badge>
+                </li>
+              ))}
+            </ul>
           ) : null}
         </div>
-
-        <div>
-          <h3 className="font-medium leading-tight">
-            <Link
-              href={`/item/${item.id}`}
-              className="rounded-sm underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              {item.title}
-            </Link>
-          </h3>
-          <p className="text-sm text-muted-foreground">{item.creator}</p>
-        </div>
-
-        <p className="text-sm text-muted-foreground">{formatMetaLine(item)}</p>
-
-        {typeof rating === "number" ? <StarRating rating={rating} /> : null}
-
-        {review ? (
-          <blockquote className="border-l-2 border-border pl-3 text-sm italic text-muted-foreground">
-            {review}
-          </blockquote>
-        ) : null}
-
-        {tags && tags.length > 0 ? (
-          <ul className="flex flex-wrap gap-1.5 pt-1">
-            {tags.map((tag) => (
-              <li key={tag}>
-                <Badge variant="muted">{tag}</Badge>
-              </li>
-            ))}
-          </ul>
-        ) : null}
       </CardContent>
     </Card>
   );

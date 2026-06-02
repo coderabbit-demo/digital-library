@@ -43,6 +43,18 @@ describe("MediaCard (DL-47)", () => {
     expect(screen.getByText("design")).toBeInTheDocument();
   });
 
+  it("shows real cover art when the item has artwork, else a type-icon tile (cover-art DL-75)", () => {
+    // Decorative cover (the title is shown alongside) → queried via the DOM, not a11y role.
+    const { container, rerender } = render(<MediaCard item={{ ...podcast, artworkUrl: "https://art/p.jpg" }} />);
+    const img = container.querySelector("img");
+    expect(img).toHaveAttribute("src", "https://art/p.jpg");
+    expect(img).toHaveAttribute("referrerpolicy", "no-referrer");
+    expect(img).toHaveAttribute("loading", "lazy");
+
+    rerender(<MediaCard item={podcast} />); // no artworkUrl
+    expect(container.querySelector("img")).toBeNull();
+  });
+
   it("shows an accessible actions menu only when actions are provided", () => {
     const { rerender } = render(<MediaCard item={podcast} />);
     expect(screen.queryByRole("button", { name: /actions for/i })).not.toBeInTheDocument();
