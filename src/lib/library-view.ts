@@ -31,6 +31,13 @@ export function filterShelfItems(items: ShelfItem[], shelf: string): ShelfItem[]
   return items.filter((i) => i.entry.status === shelf);
 }
 
+/** Filter shelf items by media type, passing everything through for "all"
+ *  (media-type-filters Req 4.2, 5.2). Shared by the Wishlist and Reviews pages. */
+export function filterShelfItemsByType(items: ShelfItem[], activeType: string): ShelfItem[] {
+  if (activeType === "all") return items;
+  return items.filter((i) => i.item.type === activeType);
+}
+
 export function resolveShelf(raw: string | undefined): string {
   return SHELF_FILTERS.some((f) => f.value === raw) ? (raw as string) : "all";
 }

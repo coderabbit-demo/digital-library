@@ -41,7 +41,7 @@
   - _Requirements: 1.3, 1.4, 1.5, 3.1, 3.2, 3.4, 6.5_
 
 - [ ] 5. Wishlist and Reviews filters
-- [ ] 5.1 (P) Add the media-type filter to the Wishlist
+- [x] 5.1 (P) Add the media-type filter to the Wishlist
   - Read the selected type from the page URL, build options and counts from the user's wishlist items, resolve the active selection (default "All"), render the shared control with wishlist-route links, show only matching items for a specific type and all items for "All", and show an empty state when nothing matches.
   - _Requirements: 1.3, 1.4, 1.5, 4.1, 4.2, 4.3, 6.1, 6.2, 6.3, 6.4, 6.5_
 
