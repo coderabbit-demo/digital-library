@@ -45,7 +45,7 @@
   - Read the selected type from the page URL, build options and counts from the user's wishlist items, resolve the active selection (default "All"), render the shared control with wishlist-route links, show only matching items for a specific type and all items for "All", and show an empty state when nothing matches.
   - _Requirements: 1.3, 1.4, 1.5, 4.1, 4.2, 4.3, 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 5.2 (P) Add the media-type filter to the Reviews page
+- [x] 5.2 (P) Add the media-type filter to the Reviews page
   - Read the selected type from the page URL, build options and counts from the user's reviewed items, resolve the active selection (default "All"), render the shared control with reviews-route links, show only matching reviewed items for a specific type and all for "All", and show an empty state when nothing matches.
   - _Requirements: 1.3, 1.4, 1.5, 5.1, 5.2, 5.3, 6.1, 6.2, 6.3, 6.4, 6.5_
 
