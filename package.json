@@ -12,7 +12,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/db/seed.ts"
+    "db:seed": "tsx src/db/seed.ts",
+    "db:backfill-covers": "tsx src/db/backfill-covers.ts"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.11",
