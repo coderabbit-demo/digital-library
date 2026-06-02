@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { BrandMark } from "./BrandMark";
 import { Avatar } from "./Avatar";
@@ -40,5 +40,22 @@ describe("visual language components (DL-13)", () => {
   it("falls back to the teal cover theme", () => {
     const { container } = render(<BookCover title="Educated" />);
     expect(container.querySelector(".book-cover")).toHaveClass("cover-teal");
+  });
+
+  it("renders real cover art as an accessible, no-referrer, lazy image (cover-art DL-75)", () => {
+    render(<BookCover title="Circe" theme="gold" imageUrl="https://covers/circe.jpg" />);
+    const img = screen.getByRole("img", { name: "Cover of Circe" });
+    expect(img).toHaveAttribute("src", "https://covers/circe.jpg");
+    expect(img).toHaveAttribute("referrerpolicy", "no-referrer");
+    expect(img).toHaveAttribute("loading", "lazy");
+  });
+
+  it("falls back to the themed placeholder when the cover image fails to load (Req 1.5)", () => {
+    const { container } = render(<BookCover title="Circe" theme="gold" imageUrl="https://covers/dead.jpg" />);
+    fireEvent.error(screen.getByRole("img", { name: "Cover of Circe" }));
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    const cover = container.querySelector(".book-cover");
+    expect(cover).toHaveClass("cover-gold");
+    expect(cover).toHaveTextContent("C");
   });
 });
