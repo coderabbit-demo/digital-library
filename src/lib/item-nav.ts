@@ -20,5 +20,8 @@ const BACK_TARGETS: Record<string, BackTarget> = {
 };
 
 export function itemBackTarget(from: string | undefined): BackTarget {
-  return (from ? BACK_TARGETS[from] : undefined) ?? LIBRARY;
+  // Object.hasOwn guards against prototype keys (e.g. "constructor") resolving
+  // to non-BackTarget values.
+  if (from && Object.hasOwn(BACK_TARGETS, from)) return BACK_TARGETS[from] ?? LIBRARY;
+  return LIBRARY;
 }

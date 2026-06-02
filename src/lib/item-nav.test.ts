@@ -11,8 +11,11 @@ describe("itemBackTarget (cover-art / trending)", () => {
     expect(itemBackTarget("reviews")).toEqual({ href: "/reviews", label: "Reviews" });
   });
 
-  it("falls back to Library for unknown or missing origins", () => {
+  it("falls back to Library for unknown, missing, or prototype-key origins", () => {
     expect(itemBackTarget(undefined)).toEqual({ href: "/library", label: "Library" });
     expect(itemBackTarget("bogus")).toEqual({ href: "/library", label: "Library" });
+    // Prototype keys must not resolve to a function/garbage target.
+    expect(itemBackTarget("constructor")).toEqual({ href: "/library", label: "Library" });
+    expect(itemBackTarget("toString")).toEqual({ href: "/library", label: "Library" });
   });
 });
