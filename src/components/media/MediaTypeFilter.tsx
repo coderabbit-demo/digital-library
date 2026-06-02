@@ -30,6 +30,7 @@ export function MediaTypeFilter({
           <Link
             key={option.value}
             href={hrefFor(option.value)}
+            scroll={false}
             aria-current={active ? "true" : undefined}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",

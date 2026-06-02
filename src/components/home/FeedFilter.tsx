@@ -29,6 +29,7 @@ export function FeedFilter({
           <Link
             key={option.value}
             href={hrefFor(option.value)}
+            scroll={false}
             aria-current={active ? "true" : undefined}
             className={cn(
               "rounded-full border px-3 py-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
