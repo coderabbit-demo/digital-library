@@ -6,12 +6,13 @@
 
 **Users**: Visitors registering or signing in; existing password members who choose to use Google.
 
-**Impact**: A minimal, hand-rolled **OIDC authorization-code (PKCE) client** plus two route handlers, a Google user-resolution service, and a conditionally-rendered button. **No schema migration** — `auth_identities` already supports the `google` provider. Email/password is untouched; the Google option is hidden when unconfigured. Adds env config (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`) and a Google Cloud OAuth client.
+**Impact**: A minimal, hand-rolled **OIDC authorization-code (PKCE) client** plus two route handlers, a Google user-resolution service, and a conditionally-rendered button. The **only schema change** is one nullable `users.avatar_url` column (for the profile picture, Req 9); `auth_identities` already supports the `google` provider unchanged. Email/password is untouched; the Google option is hidden when unconfigured. Adds env config (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`) and a Google Cloud OAuth client.
 
 ### Goals
 - Register + sign in with Google, issuing the platform's normal session.
 - Server-side, secret-safe OAuth with state/PKCE/nonce and ID-token claim validation.
 - Auto-link to an existing member when the verified email matches; otherwise create.
+- Show the user's Google profile picture in the header (linking to Profile), with the initial/color avatar as fallback.
 - No regression to password auth; gates green; flow tested without live Google calls.
 
 ### Non-Goals
@@ -84,7 +85,9 @@ Key decisions: state mismatch, invalid/expired token, or `email_verified=false` 
 | 5.1–5.5 | Server-side, env secret, state/PKCE/nonce, claim validation, allow-listed redirect, no token persistence | google client + routes + config |
 | 6.1–6.3 | Session parity + logout | `createSession`/`setSessionCookie`/existing logout |
 | 7.1–7.4 | Error/edge handling; no partial account | callback route |
-| 8.1–8.3 | Non-regression, no migration, tested w/o live calls | all; injected fetch |
+| 8.1–8.3 | Non-regression, single additive column, tested w/o live calls | all; injected fetch |
+| 9.1 | Capture + persist verified https picture | `resolveGoogleUser` + `users.avatar_url` |
+| 9.2, 9.3, 9.4, 9.5, 9.6 | Header avatar shows the picture, links to Profile, falls back on absence/error | `UserAvatar` + `AppNav` + layout |
 
 ## Components and Interfaces
 
@@ -96,6 +99,8 @@ Key decisions: state mismatch, invalid/expired token, or `email_verified=false` 
 | `GET /api/auth/google/start` | API | Redirect to Google; set state cookie | 1.2, 5.3 | API |
 | `GET /api/auth/google/callback` | API | Verify, exchange, validate, resolve, issue session | 2–7 | API |
 | Google button | UI | Entry point on login/register when configured | 1.1, 1.3 | State |
+| `users.avatar_url` + `User.avatarUrl` | Data | Persist the profile picture URL | 9.1 | State |
+| `UserAvatar` (header) | UI | Show the picture (https, no-referrer, onError→initial), link to Profile | 9.2–9.6 | State |
 
 ### lib/auth/google (OIDC client)
 
@@ -134,17 +139,19 @@ export function verifyIdToken(idToken: string, config: GoogleConfig, nonce: stri
 ```typescript
 export async function resolveGoogleUser(db: Db, profile: GoogleProfile): Promise<User>;
 ```
-- In one transaction: (1) find the `google` identity by `providerAccountId === sub` → its user; (2) else find a member by normalized email when `emailVerified` → insert a `google` identity linking it; (3) else create a member (name/email/avatar from the profile) + a `google` identity. Handle unique violations like `registerMember` (re-resolve on a lost race). Never creates a password credential.
+- In one transaction: (1) find the `google` identity by `providerAccountId === sub` → its user; (2) else find a member by normalized email when `emailVerified` → insert a `google` identity linking it; (3) else create a member (name/email/avatar-color from the profile) + a `google` identity. Handle unique violations like `registerMember` (re-resolve on a lost race). Never creates a password credential.
+- Persists the verified profile picture (Req 9.1): set `users.avatar_url` from `profile.picture` (https-only) on create, and fill it on link when the existing user has none — never clobbering a value the user already has.
 
 ### API routes (summary-only)
 - **`GET /api/auth/google/start`** (`nodejs`): 404/redirect to login if `!isGoogleConfigured()`; build `OAuthStart`, set the signed HttpOnly `SameSite=Lax` short-TTL state cookie (`{state, codeVerifier, nonce}`), 302 to `buildAuthUrl`.
 - **`GET /api/auth/google/callback`** (`nodejs`): read `code`/`state`/`error`; on `error` or missing/mismatched state cookie → redirect to login with a message; `exchangeCode` → `verifyIdToken` (null → reject); `resolveGoogleUser`; `createSession` + `setSessionCookie`; clear the state cookie; 302 to the app. Any failure → redirect to login with a recoverable message and no session (Req 7).
 
 ### UI (summary-only)
-A "Continue with Google" link/button to `/api/auth/google/start`, rendered on the login and register pages **only when `isGoogleConfigured()`** (a server-computed flag passed to the page). Email/password forms are unchanged.
+- A "Continue with Google" link/button to `/api/auth/google/start`, rendered on the login and register pages **only when `isGoogleConfigured()`** (a server-computed flag passed to the page). Email/password forms are unchanged.
+- **`UserAvatar`** (client): in the persistent header, render the user's `avatarUrl` as an `<img>` (https, `referrerPolicy="no-referrer"`, lazy) that falls back to the existing initial-and-color avatar when there is no URL or the image errors; wrapped by the existing `/profile` link in `AppNav` (so clicking it opens Profile, Req 9.2–9.6). The layout passes `user.avatarUrl` into `AppNav`.
 
 ## Data Models
-No schema change. Writes use existing tables: a `users` row (for new members) and an `auth_identities` row with `provider="google"`, `providerAccountId=sub`, `passwordHash=null`. Uniqueness on `(provider, provider_account_id)` and `(user_id, provider)` is relied upon. `User` is the existing domain type. No Google tokens persisted.
+One additive column: **`users.avatar_url text` (nullable)**, surfaced as `User.avatarUrl: string | null` (null for users without a picture, e.g. email/password members). Generated via `db:generate`; applied like prior migrations (pglite covers it). Other writes use existing tables: a `users` row (new members) and an `auth_identities` row with `provider="google"`, `providerAccountId=sub`, `passwordHash=null`; uniqueness on `(provider, provider_account_id)` and `(user_id, provider)` is relied upon. No Google access/refresh tokens persisted.
 
 ## Error Handling
 - **User/flow errors** → redirect back to the login surface with a clear message; no account/session (Req 7.1–7.3): denied consent, `email_verified=false`, missing/mismatched state, invalid/expired ID token.
@@ -161,7 +168,10 @@ No schema change. Writes use existing tables: a `users` row (for new members) an
 - `verifyIdToken`: accepts a well-formed token (correct iss/aud, unexpired, matching nonce, verified email); rejects wrong aud/iss, expired, nonce mismatch, and `email_verified=false`.
 
 ### Integration Tests (pglite) — `resolveGoogleUser`
-- New profile → creates user + `google` identity (no password); returning by `sub` → same user, no duplicate; verified-email match → links identity to the existing password user (password still works); unverified email never links by email; uniqueness respected.
+- New profile → creates user + `google` identity (no password) and persists the https picture to `avatar_url`; returning by `sub` → same user, no duplicate; verified-email match → links identity to the existing password user (password still works) and fills `avatar_url` only when empty; unverified email never links by email; uniqueness respected.
+
+### Component Test — `UserAvatar`
+- Renders the picture as an `<img>` (https, no-referrer) when `avatarUrl` is set; renders the initial-and-color fallback when absent and on image `onError`.
 
 ### Route / Non-regression
 - Callback handler with stubbed `exchangeCode`/`verifyIdToken` and pglite: success issues a session; state mismatch / invalid token / denied consent → redirect, no session. Existing password auth + middleware tests stay green; no live Google calls.

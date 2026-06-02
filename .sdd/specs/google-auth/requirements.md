@@ -90,8 +90,20 @@ Requirements define WHAT must be achieved; the concrete OAuth mechanism (a minim
 
 #### Acceptance Criteria
 1. The application shall preserve existing email/password registration, login, logout, session, and middleware behavior after Google auth is added.
-2. The application shall require no database schema migration, using the existing `google` provider support in `auth_identities`.
+2. The application shall use the existing `google` provider support in `auth_identities` without changing the authentication tables, adding only a single nullable profile-image column to `users` (for Requirement 9) as the sole schema change.
 3. The type-check, test suite, and production build shall remain green, with the OAuth flow covered by tests that do not depend on live calls to Google.
+
+### Requirement 9: Display the signed-in user's Google profile picture
+
+**Objective:** As a signed-in user who registered with Google, I want my Google profile picture shown in the site, so that my account is recognizable; clicking it should open my Profile.
+
+#### Acceptance Criteria
+1. When a user authenticates with Google, the application shall capture the verified Google profile picture URL (when present and https) and persist it on the user.
+2. While a signed-in user has a stored profile picture, the application shall display it as their avatar in the site's persistent header/navigation.
+3. The header avatar shall link to the Profile page.
+4. While a signed-in user has no stored picture (for example, email/password users), the application shall display the existing initial-and-color avatar as the fallback.
+5. The application shall load the profile image over https and without sending a referrer, consistent with other external images.
+6. If a stored profile image fails to load, the application shall fall back to the initial-and-color avatar rather than show a broken image.
 
 ## Decisions and Open Questions
 
