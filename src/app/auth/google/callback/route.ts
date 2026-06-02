@@ -12,8 +12,12 @@ export const runtime = "nodejs";
 
 const isProduction = (): boolean => process.env.NODE_ENV === "production";
 
+/** Coarse failure reason for diagnosability (never includes secrets/tokens). */
+type FailureReason = "config" | "params" | "state" | "exchange_or_verify" | "session";
+
 /** Back to the login surface with a recoverable error, clearing the state cookie. */
-function loginError(request: NextRequest): NextResponse {
+function loginError(request: NextRequest, reason: FailureReason): NextResponse {
+  console.error(`google callback failed: ${reason}`);
   const response = NextResponse.redirect(new URL("/login?error=google", request.url));
   response.cookies.delete(OAUTH_STATE_COOKIE);
   return response;
@@ -31,19 +35,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!config) return NextResponse.redirect(new URL("/login", request.url));
 
   const params = request.nextUrl.searchParams;
-  if (params.get("error")) return loginError(request);
+  if (params.get("error")) return loginError(request, "params");
   const code = params.get("code");
   const state = params.get("state");
-  if (!code || !state) return loginError(request);
+  if (!code || !state) return loginError(request, "params");
 
   const stored = decodeOAuthState(request.cookies.get(OAUTH_STATE_COOKIE)?.value, serverEnv().AUTH_SECRET);
-  if (!stored || stored.state !== state) return loginError(request);
+  if (!stored || stored.state !== state) return loginError(request, "state");
 
+  let profile;
   try {
     const { idToken } = await exchangeCode(config, code, stored.codeVerifier);
-    const profile = verifyIdToken(idToken, config, stored.nonce);
-    if (!profile) return loginError(request);
+    profile = verifyIdToken(idToken, config, stored.nonce);
+  } catch {
+    return loginError(request, "exchange_or_verify");
+  }
+  if (!profile) return loginError(request, "exchange_or_verify");
 
+  try {
     const db = getDb();
     const user = await resolveGoogleUser(db, profile);
     const { token, expiresAt } = await createSession(db, user.id);
@@ -53,6 +62,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     response.cookies.delete(OAUTH_STATE_COOKIE);
     return response;
   } catch {
-    return loginError(request);
+    return loginError(request, "session");
   }
 }

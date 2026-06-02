@@ -3,8 +3,10 @@
  * create-on-first-use, returning-by-sub, link-by-verified-email (password still
  * works; avatar filled only when empty).
  */
+import { eq } from "drizzle-orm";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { findEntry } from "@/db/queries";
+import { users } from "@/db/schema";
 import type { Db } from "@/db/client";
 import { createTestDb } from "@/db/test-db";
 import type { GoogleProfile } from "./google";
@@ -55,6 +57,17 @@ describe("resolveGoogleUser (google-auth DL-80)", () => {
     // The original password credential remains usable.
     const byPassword = await loginMember(db, { email: "ava@example.com", password: "readmore" });
     expect(byPassword?.id).toBe(reg.user.id);
+  });
+
+  it("keeps a member's existing avatar on the first email-link (does not overwrite)", async () => {
+    const reg = await registerMember(db, { name: "Ava", email: "ava@example.com", password: "readmore" });
+    if (!reg.ok) throw new Error("registration failed");
+    // Member already has a local avatar before any Google sign-in.
+    await db.update(users).set({ avatarUrl: "https://local/existing.jpg" }).where(eq(users.id, reg.user.id));
+
+    const linked = await resolveGoogleUser(db, profile({ picture: "https://x/google.jpg" }));
+    expect(linked.id).toBe(reg.user.id);
+    expect(linked.avatarUrl).toBe("https://local/existing.jpg"); // first-link guard honored
   });
 
   it("does not clobber an existing avatar when linking", async () => {

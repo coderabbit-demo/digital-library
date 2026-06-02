@@ -41,6 +41,8 @@ export const users = pgTable(
   (t) => [
     unique("users_email_unique").on(t.email),
     check("users_kind_check", sql`${t.kind} in ('member', 'community')`),
+    // Avatar URLs are https-only (validated in code); enforce it at the DB too.
+    check("users_avatar_url_https_check", sql`${t.avatarUrl} is null or ${t.avatarUrl} like 'https://%'`),
   ],
 );
 

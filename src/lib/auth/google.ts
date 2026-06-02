@@ -102,6 +102,8 @@ export async function exchangeCode(
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
     body: body.toString(),
+    // Bound the exchange so a hung token endpoint can't stall the callback.
+    signal: AbortSignal.timeout(8000),
   });
   if (!res.ok) throw new Error(`Google token exchange failed: ${res.status}`);
   const data = (await res.json()) as unknown;
@@ -112,9 +114,13 @@ export async function exchangeCode(
 
 /**
  * Validate the ID token and return the normalized profile, or null if invalid.
- * The token arrives over the direct TLS token exchange, so claim validation
- * (iss/aud/exp/nonce + email_verified) is sufficient; signature verification via
- * JWKS is optional hardening.
+ *
+ * Signature verification is intentionally omitted: the token is obtained
+ * directly from Google's token endpoint over the server-to-server TLS exchange
+ * in `exchangeCode`, where Google's own guidance states signature validation is
+ * not required (https://developers.google.com/identity/openid-connect/openid-connect#obtainuserinfo).
+ * We still validate the security-relevant claims — issuer, audience, expiry, the
+ * request-bound nonce, and email_verified — before trusting the identity.
  */
 export function verifyIdToken(idToken: string, config: GoogleConfig, expectedNonce: string): GoogleProfile | null {
   const payload = decodeJwtPayload(idToken);
