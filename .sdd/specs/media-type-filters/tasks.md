@@ -54,6 +54,6 @@
   - Add a clarifying note to the trending-now specification stating that this user-initiated media-type filtering is distinct from, and does not contradict, the requirement that trending results are a plain pull without profile-based filtering.
   - _Requirements: 7.3, 7.4_
 
-- [ ] 6.2 Verify consistency and non-regression
+- [x] 6.2 Verify consistency and non-regression
   - Run the type-checker, the test suite, and the production build, and confirm the existing Home community-feed and Library media-type filters still function unchanged (including the feed link now preserving the Trending-section selection).
   - _Requirements: 7.1, 7.2_
