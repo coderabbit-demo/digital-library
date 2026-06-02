@@ -3,7 +3,7 @@
  * rating and the actions menu. (The media-type filter moved to
  * components/media and is covered by media-type-filter.test.tsx — DL-73.)
  */
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { MediaCard } from "./MediaCard";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
@@ -53,6 +53,15 @@ describe("MediaCard (DL-47)", () => {
 
     rerender(<MediaCard item={podcast} />); // no artworkUrl
     expect(container.querySelector("img")).toBeNull();
+  });
+
+  it("falls back to the icon tile when the cover image fails to load (cover-art DL-75)", () => {
+    const { container } = render(<MediaCard item={{ ...podcast, artworkUrl: "https://art/dead.jpg" }} />);
+    const img = container.querySelector("img");
+    expect(img).not.toBeNull();
+    fireEvent.error(img as HTMLImageElement);
+    expect(container.querySelector("img")).toBeNull();
+    expect(container.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
   });
 
   it("shows an accessible actions menu only when actions are provided", () => {

@@ -19,7 +19,7 @@ const ITUNES_ENTITIES: Record<string, readonly string[]> = {
 };
 
 export function isSupportedCoverType(type: string): boolean {
-  return type === "ebook" || type in ITUNES_ENTITIES;
+  return type === "ebook" || Object.hasOwn(ITUNES_ENTITIES, type);
 }
 
 export function resolveCover(

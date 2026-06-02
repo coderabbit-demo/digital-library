@@ -25,21 +25,33 @@ async function main(): Promise<void> {
   let resolved = 0;
   let none = 0;
   let processed = 0;
+  // Rows we've already attempted this run. A successful attempt stamps
+  // artwork_checked_at and leaves the "needs cover" set; this set additionally
+  // guarantees termination if a row keeps throwing (it never clears its marker).
+  const attempted = new Set<string>();
 
   for (;;) {
     const batch = await findMediaNeedingCover(db, BATCH);
-    if (batch.length === 0) break;
+    const fresh = batch.filter((item) => !attempted.has(item.id));
+    if (fresh.length === 0) break; // nothing left, or only stuck rows → stop
 
-    for (const item of batch) {
-      const outcome = await resolveAndPersistCover(db, item.id, { coverDeps: { timeoutMs: TIMEOUT_MS } });
+    for (const item of fresh) {
+      attempted.add(item.id);
       processed += 1;
-      const url = outcome.status === "resolved" ? outcome.artworkUrl : null;
-      if (url) {
-        resolved += 1;
-        console.log(`✓ ${item.type} · ${item.title} → ${url}`);
-      } else {
+      try {
+        const outcome = await resolveAndPersistCover(db, item.id, { coverDeps: { timeoutMs: TIMEOUT_MS } });
+        const url = outcome.status === "resolved" ? outcome.artworkUrl : null;
+        if (url) {
+          resolved += 1;
+          console.log(`✓ ${item.type} · ${item.title} → ${url}`);
+        } else {
+          none += 1;
+          console.log(`· ${item.type} · ${item.title} (no cover)`);
+        }
+      } catch (error) {
+        // Don't let one row (e.g. a transient DB error) abort the whole backfill.
         none += 1;
-        console.log(`· ${item.type} · ${item.title} (no cover)`);
+        console.error(`✗ ${item.type} · ${item.title} (error)`, error);
       }
       await sleep(DELAY_MS);
     }

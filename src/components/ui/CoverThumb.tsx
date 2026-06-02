@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 
 export interface CoverThumbProps {
@@ -21,6 +21,12 @@ export interface CoverThumbProps {
  */
 export function CoverThumb({ src, alt = "", Icon }: CoverThumbProps): React.JSX.Element {
   const [failed, setFailed] = useState(false);
+
+  // Reset on src change so a reused card (e.g. after filtering) retries the new
+  // image instead of keeping a previous item's failed-fallback.
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
 
   if (src && !failed) {
     return (
