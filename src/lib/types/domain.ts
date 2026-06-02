@@ -48,6 +48,8 @@ export interface User {
   /** Null for community-only actors; unique among members (Req 10.3). */
   email: string | null;
   avatarColor: string;
+  /** Profile picture URL (https) when known (e.g. from Google); null otherwise (google-auth Req 9). */
+  avatarUrl?: string | null;
   bio: string;
 }
 

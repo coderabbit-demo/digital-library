@@ -32,6 +32,9 @@ export const users = pgTable(
     // Nullable: community actors have no email. Unique among non-null values.
     email: text("email"),
     avatarColor: text("avatar_color").notNull(),
+    // Optional profile picture URL (https) — populated from Google sign-in
+    // (google-auth Req 9); null for email/password members.
+    avatarUrl: text("avatar_url"),
     bio: text("bio").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

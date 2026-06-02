@@ -8,6 +8,7 @@ const user: UserRow = {
   name: "Ava Patel",
   email: "ava@example.com",
   avatarColor: "#2f7d7e",
+  avatarUrl: null,
   bio: "Weekend reader",
   createdAt: new Date("2026-05-01T00:00:00.000Z"),
 };
@@ -36,6 +37,7 @@ describe("db mappers (DL-15)", () => {
       name: "Ava Patel",
       email: "ava@example.com",
       avatarColor: "#2f7d7e",
+      avatarUrl: null,
       bio: "Weekend reader",
     });
   });
