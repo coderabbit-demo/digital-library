@@ -73,6 +73,6 @@ export const applePodcastsProvider: TrendingProvider = {
     const url = `${CHARTS_BASE}/${count}/podcasts.json`;
     const res = await doFetch(url, { next: { revalidate: REVALIDATE_SECONDS } });
     if (!res.ok) throw new Error(`Apple Podcasts request failed: ${res.status}`);
-    return normalizeApplePodcasts(await res.json(), limit);
+    return normalizeApplePodcasts(await res.json(), count);
   },
 };

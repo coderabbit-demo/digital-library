@@ -27,9 +27,9 @@ describe("trending registry (DL-63, DL-77)", () => {
 
   it("reports keyed sources unconfigured (no upstream call) while the keyless podcast source is ok", async () => {
     // Only the keyless Apple provider should call fetch; keyed ones short-circuit.
-    const fetchImpl = vi.fn(async () => ({ ok: true, json: async () => ({ feed: { results: [] } }) }) as unknown as Response) as unknown as typeof fetch;
+    const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ feed: { results: [] } }) }) as unknown as Response);
 
-    const res = await fetchTrendingFeed({ env: {}, fetchImpl });
+    const res = await fetchTrendingFeed({ env: {}, fetchImpl: fetchMock as unknown as typeof fetch });
     const byId = Object.fromEntries(res.sources.map((s) => [s.source, s.status]));
 
     expect(res.sources).toHaveLength(5);
@@ -39,6 +39,6 @@ describe("trending registry (DL-63, DL-77)", () => {
     expect(byId["tmdb-tv"]).toBe("unconfigured");
     expect(byId["apple-podcasts"]).toBe("ok");
     // Exactly one upstream call — the keyless podcast provider.
-    expect((fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

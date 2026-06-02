@@ -120,8 +120,10 @@ export interface AddTrendingMedia {
 export function validateAddTrending(body: unknown): AddTrendingMedia | null {
   const b = asObject(body);
   const title = asString(b.title).trim();
+  // Creator is optional: some media types (e.g. TMDB TV/movies) have no
+  // creator/cast in the trending payload, so only a title is required.
   const creator = asString(b.creator).trim();
-  if (!title || !creator) return null;
+  if (!title) return null;
   const type = asString(b.type).trim() || "ebook";
   if (type.length > MAX_TYPE_LENGTH) return null;
   const statusRaw = asString(b.status).trim();

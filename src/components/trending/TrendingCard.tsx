@@ -9,9 +9,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CoverThumb } from "@/components/ui/CoverThumb";
 import { sendJson } from "@/lib/api/client";
 import { mediaTypeLabel } from "@/lib/media-type";
-import type { TrendingItem } from "@/lib/types";
+import type { TrendingItem, TrendingMediaType } from "@/lib/types";
 
-const TYPE_ICON: Record<string, LucideIcon> = {
+// Exhaustive: TypeScript requires an icon for every TrendingMediaType.
+const TYPE_ICON: Record<TrendingMediaType, LucideIcon> = {
   ebook: BookOpen,
   music: Music,
   podcast: Mic,
@@ -60,7 +61,7 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
         return;
       }
       const data = (await res.json()) as { id?: string };
-      if (data.id) router.push(`/item/${data.id}`);
+      if (data.id) router.push(`/item/${data.id}?from=trending`);
       else setError("Could not open details.");
     } catch {
       setError("Could not open details.");
