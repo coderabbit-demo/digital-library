@@ -6,6 +6,7 @@ import { getDb } from "@/db/client";
 import { listEntriesForUser, listMedia } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { typeFilterHrefFactory } from "@/lib/media-type";
+import { firstParam } from "@/lib/search-params";
 import { ownedTrendingKeys, trendingItemKey } from "@/lib/trending/ownership";
 import { fetchTrendingFeed } from "@/lib/trending/feed";
 import { buildTrendingView } from "@/lib/trending/view";
@@ -21,7 +22,7 @@ import { buildTrendingView } from "@/lib/trending/view";
 export default async function TrendingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string | string[] }>;
 }): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
@@ -34,7 +35,7 @@ export default async function TrendingPage({
     listMedia(db),
   ]);
   const owned = ownedTrendingKeys(entries, media);
-  const view = buildTrendingView(feed, type);
+  const view = buildTrendingView(feed, firstParam(type));
   const hrefFor = typeFilterHrefFactory({ basePath: "/trending" });
 
   return (

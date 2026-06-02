@@ -6,6 +6,7 @@ import { listEntriesForUser, listMedia, listTagsByEntryIds } from "@/db/queries"
 import { getSessionUser } from "@/lib/auth/current-user";
 import { composeShelfItems, filterShelfItemsByType } from "@/lib/library-view";
 import { mediaTypeCounts, resolveActiveType, typeFilterHrefFactory } from "@/lib/media-type";
+import { firstParam } from "@/lib/search-params";
 
 /** Reviews (DL-49): the user's reviewed items showing ratings and review text,
  * with the ability to edit a review via the card's actions (Req 11.3) and a
@@ -13,7 +14,7 @@ import { mediaTypeCounts, resolveActiveType, typeFilterHrefFactory } from "@/lib
 export default async function ReviewsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string | string[] }>;
 }): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
@@ -24,7 +25,7 @@ export default async function ReviewsPage({
   const reviewed = composeShelfItems(entries, media).filter(({ entry }) => entry.rating !== null);
 
   const options = mediaTypeCounts(reviewed.map(({ item }) => item));
-  const activeType = resolveActiveType(type, options);
+  const activeType = resolveActiveType(firstParam(type), options);
   const visible = filterShelfItemsByType(reviewed, activeType);
   const hrefFor = typeFilterHrefFactory({ basePath: "/reviews" });
   const tagsByEntry = await listTagsByEntryIds(db, visible.map(({ entry }) => entry.id));

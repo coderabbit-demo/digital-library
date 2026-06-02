@@ -25,6 +25,7 @@ import {
   resolveActiveType,
   typeFilterHrefFactory,
 } from "@/lib/media-type";
+import { firstParam } from "@/lib/search-params";
 import { computeStreaks } from "@/lib/streaks";
 import { computeUserStats } from "@/lib/stats";
 import { ownedTrendingKeys } from "@/lib/trending/ownership";
@@ -37,12 +38,13 @@ import { ownedTrendingKeys } from "@/lib/trending/ownership";
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string; trending?: string }>;
+  searchParams: Promise<{ type?: string | string[]; trending?: string | string[] }>;
 }): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const { type, trending } = await searchParams;
+  const trendingType = firstParam(trending);
   const db = getDb();
   const now = new Date();
   const year = String(now.getUTCFullYear());
@@ -67,7 +69,7 @@ export default async function HomePage({
   );
 
   const options = mediaTypeOptions(distinctMediaTypes(media));
-  const activeType = resolveActiveType(type, options);
+  const activeType = resolveActiveType(firstParam(type), options);
   const feed = await listFeed(db, activeType === "all" ? {} : { type: activeType });
   const ownedTrending = ownedTrendingKeys(entries, media);
   // The community feed uses `?type=`; the Trending section (DL-73) uses
@@ -76,7 +78,7 @@ export default async function HomePage({
   const feedHrefFor = typeFilterHrefFactory({
     basePath: "/",
     param: "type",
-    preserve: { trending },
+    preserve: { trending: trendingType },
   });
   const trendingHrefFor = typeFilterHrefFactory({
     basePath: "/",
@@ -89,7 +91,7 @@ export default async function HomePage({
       <DashboardHeader userName={user.name} />
       <StatCards stats={stats} goalProgress={goalProgress} streaks={streaks} />
       <AchievementsSection achievements={achievements} />
-      <TrendingSection owned={ownedTrending} activeType={trending ?? "all"} hrefFor={trendingHrefFor} />
+      <TrendingSection owned={ownedTrending} activeType={trendingType ?? "all"} hrefFor={trendingHrefFor} />
       <Card>
         <CardHeader>
           <CardTitle id="feed-title">Community feed</CardTitle>

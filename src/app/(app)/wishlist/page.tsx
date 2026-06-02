@@ -6,13 +6,14 @@ import { listEntriesForUser, listMedia, listTagsByEntryIds } from "@/db/queries"
 import { getSessionUser } from "@/lib/auth/current-user";
 import { composeShelfItems, filterShelfItems, filterShelfItemsByType } from "@/lib/library-view";
 import { mediaTypeCounts, resolveActiveType, typeFilterHrefFactory } from "@/lib/media-type";
+import { firstParam } from "@/lib/search-params";
 
 /** Wishlist (DL-49): the user's wishlist-status items, with shelf actions
  * (Req 11.2) and a media-type filter (media-type-filters Req 4). */
 export default async function WishlistPage({
   searchParams,
 }: {
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string | string[] }>;
 }): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
@@ -23,7 +24,7 @@ export default async function WishlistPage({
   const items = filterShelfItems(composeShelfItems(entries, media), "wishlist");
 
   const options = mediaTypeCounts(items.map(({ item }) => item));
-  const activeType = resolveActiveType(type, options);
+  const activeType = resolveActiveType(firstParam(type), options);
   const visible = filterShelfItemsByType(items, activeType);
   const hrefFor = typeFilterHrefFactory({ basePath: "/wishlist" });
   const tagsByEntry = await listTagsByEntryIds(db, visible.map(({ entry }) => entry.id));
