@@ -78,6 +78,10 @@ export interface MediaItem {
   language: string;
   description: string;
   coverTheme: string;
+  /** Real cover image URL (https) when known; null/absent ⇒ themed placeholder (cover-art Req 2.1, 2.3). */
+  artworkUrl?: string | null;
+  /** When cover resolution was last attempted; null/absent ⇒ never attempted, eligible (cover-art Req 4.5). */
+  artworkCheckedAt?: string | null;
   /** Type-specific extras; null/absent for legacy rows and unknown types (Req 1.1, 1.4). */
   metadata?: MediaItemMetadata | null;
   /** Total consumable units (pages/episodes/runtime) backing progress (Req 3.1). */

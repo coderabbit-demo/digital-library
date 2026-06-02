@@ -47,6 +47,8 @@ export function toMediaItem(row: MediaItemRow): MediaItem {
     language: row.language,
     description: row.description,
     coverTheme: row.coverTheme,
+    artworkUrl: row.artworkUrl ?? null,
+    artworkCheckedAt: row.artworkCheckedAt ? row.artworkCheckedAt.toISOString() : null,
     metadata: row.metadata ?? null,
     totalUnits: row.totalUnits,
   };

@@ -99,6 +99,12 @@ export const mediaItems = pgTable("media_items", {
   language: text("language").notNull().default("English"),
   description: text("description").notNull().default(""),
   coverTheme: text("cover_theme").notNull().default("teal"),
+  // Real cover image URL (https) when known; null ⇒ themed placeholder (cover-art Req 2.1).
+  artworkUrl: text("artwork_url"),
+  // When cover resolution was last attempted; null ⇒ never attempted, so the
+  // item is eligible for resolution and the lookup is not repeated once set
+  // (cover-art Req 4.5).
+  artworkCheckedAt: timestamp("artwork_checked_at", { withTimezone: true }),
   // Type-specific extras (album, episode count, …); null for legacy/unknown
   // types (media-platform-v2 Req 1.1, 1.4). Validated into the domain union.
   metadata: jsonb("metadata").$type<MediaItemMetadata>(),
