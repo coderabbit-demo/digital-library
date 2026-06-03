@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getDb } from "@/db/client";
 import { getSessionUser } from "@/lib/auth/current-user";
 import { apiError, badRequest, serverError, unauthorized } from "@/lib/api/responses";
+import { isUuid } from "@/lib/api/validation";
 import { resolveAndPersistEnrichment } from "@/lib/enrichment/service";
 import type { ApiError, MediaEnrichment } from "@/lib/types";
 
@@ -33,6 +34,9 @@ export async function POST(request: Request): Promise<NextResponse<EnrichmentRes
       ? (body as { mediaItemId: string }).mediaItemId
       : null;
   if (!mediaItemId) return badRequest("A mediaItemId is required.");
+  // media_items.id is a uuid; reject malformed ids up front so a bad value
+  // returns 400 instead of a Postgres "invalid input syntax for type uuid" 500.
+  if (!isUuid(mediaItemId)) return badRequest("A valid mediaItemId is required.");
 
   try {
     const outcome = await resolveAndPersistEnrichment(getDb(), mediaItemId);

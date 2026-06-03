@@ -21,6 +21,17 @@ function asString(value: unknown): string {
 
 const MAX_TYPE_LENGTH = 64;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Whether a value is a syntactically valid UUID. Used to reject malformed ids at
+ * the boundary so a bad value yields a 400 rather than a Postgres "invalid input
+ * syntax for type uuid" error surfacing as a 500.
+ */
+export function isUuid(value: unknown): value is string {
+  return typeof value === "string" && UUID_RE.test(value);
+}
+
 /**
  * Normalize a `?type=` filter at the boundary. Missing/empty/"all" means "no
  * filter"; otherwise the trimmed value is used. Media types are an open,
