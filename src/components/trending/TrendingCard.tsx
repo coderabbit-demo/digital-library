@@ -25,6 +25,8 @@ export interface TrendingCardProps {
   item: TrendingItem;
   /** True when the user already has this item in their library. */
   alreadyInLibrary?: boolean;
+  /** Origin recorded on the detail link's `from` param (back-navigation). */
+  detailsFrom?: string;
 }
 
 /**
@@ -33,7 +35,7 @@ export interface TrendingCardProps {
  * an add-to-library control that calls the add endpoint and reflects state.
  * Conveys state by text + icon (not color alone); keyboard-operable.
  */
-export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardProps): React.JSX.Element {
+export function TrendingCard({ item, alreadyInLibrary = false, detailsFrom = "trending" }: TrendingCardProps): React.JSX.Element {
   const router = useRouter();
   const [state, setState] = useState<AddState>(alreadyInLibrary ? "added" : "idle");
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export function TrendingCard({ item, alreadyInLibrary = false }: TrendingCardPro
         return;
       }
       const data = (await res.json()) as { id?: string };
-      if (data.id) router.push(`/item/${data.id}?from=trending`);
+      if (data.id) router.push(`/item/${data.id}?from=${encodeURIComponent(detailsFrom)}`);
       else setError("Could not open details.");
     } catch {
       setError("Could not open details.");

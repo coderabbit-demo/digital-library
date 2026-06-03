@@ -14,6 +14,7 @@ const LIBRARY: BackTarget = { href: "/library", label: "Library" };
 
 const BACK_TARGETS: Record<string, BackTarget> = {
   trending: { href: "/trending", label: "Trending" },
+  search: { href: "/search", label: "Search" },
   wishlist: { href: "/wishlist", label: "Wishlist" },
   reviews: { href: "/reviews", label: "Reviews" },
   library: LIBRARY,
