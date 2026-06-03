@@ -63,7 +63,11 @@ export async function TrendingSection({
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {view.items.map((item) => (
             <li key={`${item.source}-${item.externalId ?? item.title}`}>
-              <TrendingCard item={item} alreadyInLibrary={owned.has(trendingItemKey(item))} />
+              <TrendingCard
+                item={item}
+                alreadyInLibrary={owned.has(trendingItemKey(item))}
+                detailsFrom="home"
+              />
             </li>
           ))}
         </ul>
