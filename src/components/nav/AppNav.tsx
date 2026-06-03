@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { BookMarked, Heart, Home, LogOut, Star, TrendingUp, type LucideIcon } from "lucide-react";
+import { BookMarked, Heart, Home, LogOut, Search, Star, TrendingUp, type LucideIcon } from "lucide-react";
 import { AddItemDialog } from "@/components/library/AddItemDialog";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/UserAvatar";
@@ -65,6 +65,22 @@ export function AppNav({ userName, avatarColor, avatarUrl }: AppNavProps): React
         </Link>
 
         <div className="flex items-center gap-2">
+          <form action="/search" role="search" className="relative hidden sm:block">
+            <label htmlFor="global-search" className="sr-only">
+              Search media
+            </label>
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              id="global-search"
+              name="q"
+              type="search"
+              placeholder="Search media…"
+              className="h-9 w-44 rounded-md border border-border bg-input-background pl-8 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring lg:w-56"
+            />
+          </form>
           <AddItemDialog />
           <Link
             href="/profile"
