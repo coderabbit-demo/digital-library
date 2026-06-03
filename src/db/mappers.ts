@@ -16,6 +16,7 @@ import type {
   UserAchievement,
   UserKind,
 } from "@/lib/types";
+import { parseMediaEnrichment } from "@/lib/media-enrichment";
 import type {
   ActivityRow,
   GoalRow,
@@ -51,6 +52,8 @@ export function toMediaItem(row: MediaItemRow): MediaItem {
     artworkUrl: row.artworkUrl ?? null,
     artworkCheckedAt: row.artworkCheckedAt ? row.artworkCheckedAt.toISOString() : null,
     metadata: row.metadata ?? null,
+    enrichment: row.enrichment ? parseMediaEnrichment(row.type, row.enrichment) : null,
+    enrichmentCheckedAt: row.enrichmentCheckedAt ? row.enrichmentCheckedAt.toISOString() : null,
     totalUnits: row.totalUnits,
   };
 }

@@ -26,6 +26,45 @@ export type MediaItemMetadata =
   | { kind: "podcast"; show?: string; episodeCount?: number }
   | { kind: "tv_movie"; runtimeMinutes?: number; seasons?: number };
 
+/**
+ * Externally-sourced enrichment for a media item (media-detail-enrichment),
+ * discriminated on the media kind like {@link MediaItemMetadata}. Stored as jsonb
+ * and validated into this union at the boundary so it is never read as `any`.
+ * Every field is optional — providers fill what they can and absent fields are
+ * omitted gracefully. Numeric scores are persisted here; transient review
+ * excerpt text is fetched per view and never stored.
+ */
+export type MediaEnrichment =
+  | {
+      kind: "tv_movie";
+      /** Resolved TMDB id; drives the per-view review-excerpt fetch. */
+      tmdbId?: number;
+      /** Whether the TMDB id is a movie or TV title (selects the reviews endpoint). */
+      tmdbType?: "movie" | "tv";
+      runtimeMinutes?: number;
+      genres?: string[];
+      releaseDate?: string;
+      tagline?: string;
+      cast?: string[];
+      voteAverage?: number;
+      voteCount?: number;
+    }
+  | {
+      kind: "ebook";
+      pageCount?: number;
+      publisher?: string;
+      publishedDate?: string;
+      categories?: string[];
+      isbn10?: string;
+      isbn13?: string;
+      averageRating?: number;
+      ratingsCount?: number;
+      openLibraryRating?: number;
+      openLibraryRatingsCount?: number;
+    }
+  | { kind: "music"; genre?: string; releaseDate?: string; trackCount?: number; discCount?: number; label?: string }
+  | { kind: "podcast"; publisher?: string; episodeCount?: number; genre?: string };
+
 export const LIBRARY_STATUSES = ["wishlist", "current", "finished"] as const;
 export type LibraryStatus = (typeof LIBRARY_STATUSES)[number];
 
@@ -86,6 +125,10 @@ export interface MediaItem {
   artworkCheckedAt?: string | null;
   /** Type-specific extras; null/absent for legacy rows and unknown types (Req 1.1, 1.4). */
   metadata?: MediaItemMetadata | null;
+  /** Externally-sourced enrichment; null/absent until resolved (media-detail-enrichment Req 1, 2). */
+  enrichment?: MediaEnrichment | null;
+  /** When enrichment was last attempted; null/absent ⇒ never attempted, eligible (Req 2.3). */
+  enrichmentCheckedAt?: string | null;
   /** Total consumable units (pages/episodes/runtime) backing progress (Req 3.1). */
   totalUnits?: number | null;
 }

@@ -25,6 +25,8 @@ const media: MediaItemRow = {
   artworkUrl: null,
   artworkCheckedAt: null,
   metadata: null,
+  enrichment: null,
+  enrichmentCheckedAt: null,
   totalUnits: null,
 };
 

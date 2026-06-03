@@ -2,7 +2,10 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { CoverResolver } from "@/components/item/CoverResolver";
+import { EnrichmentDetails } from "@/components/item/EnrichmentDetails";
+import { EnrichmentResolver } from "@/components/item/EnrichmentResolver";
 import { ItemActions } from "@/components/item/ItemActions";
+import { ReviewsSection } from "@/components/item/ReviewsSection";
 import { Badge } from "@/components/ui/badge";
 import { BookCover } from "@/components/ui/BookCover";
 import { StarRating } from "@/components/ui/StarRating";
@@ -45,6 +48,9 @@ export default async function ItemPage({
   // First view of an art-less, never-checked, supported item: resolve its cover
   // on demand (the placeholder shows until it lands). Cached thereafter.
   const needsCover = !item.artworkUrl && !item.artworkCheckedAt && isSupportedCoverType(item.type);
+  // First view of a never-enriched item: resolve enrichment on demand and cache
+  // it (media-detail-enrichment Req 2). The sections fill in once it lands.
+  const needsEnrichment = !item.enrichmentCheckedAt;
 
   return (
     <section aria-labelledby="item-title" className="flex flex-col gap-6">
@@ -59,6 +65,7 @@ export default async function ItemPage({
       <div className="grid gap-6 sm:grid-cols-[8rem_minmax(0,1fr)]">
         <BookCover title={item.title} theme={item.coverTheme} imageUrl={item.artworkUrl} />
         {needsCover ? <CoverResolver mediaItemId={item.id} /> : null}
+        {needsEnrichment ? <EnrichmentResolver mediaItemId={item.id} /> : null}
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="secondary">{mediaTypeLabel(item.type)}</Badge>
@@ -82,6 +89,10 @@ export default async function ItemPage({
           ) : null}
         </div>
       </div>
+
+      <EnrichmentDetails enrichment={item.enrichment} />
+
+      <ReviewsSection item={item} />
 
       <ItemActions
         mediaItemId={item.id}
