@@ -65,21 +65,24 @@ export function AppNav({ userName, avatarColor, avatarUrl }: AppNavProps): React
         </Link>
 
         <div className="flex items-center gap-2">
-          <form action="/search" role="search" className="relative hidden sm:block">
+          <form action="/search" role="search" className="hidden items-center gap-2 sm:flex">
             <label htmlFor="global-search" className="sr-only">
               Search media
             </label>
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              id="global-search"
-              name="q"
-              type="search"
-              placeholder="Search media…"
-              className="h-9 w-44 rounded-md border border-border bg-input-background pl-8 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring lg:w-56"
-            />
+            <div className="relative">
+              <Search
+                aria-hidden="true"
+                className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                id="global-search"
+                name="q"
+                type="search"
+                placeholder="Search media…"
+                className="h-9 w-44 rounded-md border border-border bg-input-background pl-8 pr-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring lg:w-56"
+              />
+            </div>
+            <Button type="submit">Search</Button>
           </form>
           <AddItemDialog />
           <Link

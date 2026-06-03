@@ -41,7 +41,7 @@ export default async function WishlistPage({
       <h1 id="wishlist-title" className="text-2xl font-medium">
         Wishlist
       </h1>
-      {items.length === 0 ? (
+      {items.length === 0 && !query ? (
         <p className="py-4 text-muted-foreground">Nothing on your wishlist yet.</p>
       ) : (
         <>
@@ -52,12 +52,14 @@ export default async function WishlistPage({
               ariaLabel="Search your wishlist"
               hidden={activeType === "all" ? {} : { type: activeType }}
             />
-            <MediaTypeFilter
-              options={options}
-              activeValue={activeType}
-              hrefFor={hrefFor}
-              ariaLabel="Filter wishlist by media type"
-            />
+            {items.length > 0 ? (
+              <MediaTypeFilter
+                options={options}
+                activeValue={activeType}
+                hrefFor={hrefFor}
+                ariaLabel="Filter wishlist by media type"
+              />
+            ) : null}
           </div>
           {visible.length === 0 ? (
             <p className="py-4 text-muted-foreground">No wishlist items match your search.</p>
