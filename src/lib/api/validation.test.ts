@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isUuid,
   parseTypeFilter,
   validateAddTrending,
   validateCustomMedia,
@@ -10,6 +11,18 @@ import {
   validateReview,
   validateTags,
 } from "./validation";
+
+describe("isUuid", () => {
+  it("accepts a well-formed UUID and rejects malformed or non-string values", () => {
+    expect(isUuid("00000000-0000-4000-8000-000000000000")).toBe(true);
+    expect(isUuid("3dd5b1bd-9500-433a-ba7e-37a33baa8ff2")).toBe(true);
+    expect(isUuid("not-a-uuid")).toBe(false);
+    expect(isUuid("00000000-0000-4000-8000")).toBe(false); // too short
+    expect(isUuid("00000000-0000-4000-8000-000000000000 ")).toBe(false); // trailing space
+    expect(isUuid(123)).toBe(false);
+    expect(isUuid(null)).toBe(false);
+  });
+});
 
 describe("API request validation (DL-26)", () => {
   it("accepts a valid profile update and normalizes preferences", () => {

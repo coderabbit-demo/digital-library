@@ -15,6 +15,7 @@ import type {
   Goal,
   LibraryEntry,
   LibraryStatus,
+  MediaEnrichment,
   MediaItem,
   MediaType,
   Preferences,
@@ -183,12 +184,15 @@ export async function findMediaByTypeTitleCreator(
 }
 
 /**
- * Fields accepted when creating a media row. `artworkCheckedAt` is a
- * resolver-managed timestamp (set via updateMediaArtwork), not a creation input,
- * so it is excluded here; `artworkUrl` may be supplied (e.g. provider art on a
- * trending add).
+ * Fields accepted when creating a media row. Resolver-managed fields are
+ * excluded: `artworkCheckedAt` (set via updateMediaArtwork) and the enrichment
+ * pair (set via updateMediaEnrichment). `artworkUrl` may be supplied (e.g.
+ * provider art on a trending add).
  */
-export type MediaCreateInput = Omit<MediaItem, "id" | "artworkCheckedAt">;
+export type MediaCreateInput = Omit<
+  MediaItem,
+  "id" | "artworkCheckedAt" | "enrichment" | "enrichmentCheckedAt"
+>;
 
 export async function insertMediaItem(db: DbExecutor,
   input: MediaCreateInput,
@@ -210,6 +214,21 @@ export async function updateMediaArtwork(
   await db
     .update(mediaItems)
     .set({ artworkUrl, artworkCheckedAt: checkedAt })
+    .where(eq(mediaItems.id, id));
+}
+
+/** Set a media item's resolved enrichment and stamp the resolution attempt, so
+ *  the external lookup is not repeated once an outcome is known — including a
+ *  definitive "no data" (null) result (media-detail-enrichment Req 2.2, 2.3). */
+export async function updateMediaEnrichment(
+  db: DbExecutor,
+  id: string,
+  enrichment: MediaEnrichment | null,
+  checkedAt: Date,
+): Promise<void> {
+  await db
+    .update(mediaItems)
+    .set({ enrichment, enrichmentCheckedAt: checkedAt })
     .where(eq(mediaItems.id, id));
 }
 

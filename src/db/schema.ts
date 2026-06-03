@@ -20,7 +20,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import type { MediaItemMetadata, Preferences } from "@/lib/types/domain";
+import type { MediaEnrichment, MediaItemMetadata, Preferences } from "@/lib/types/domain";
 
 /** Members (can authenticate) and community actors (feed-only) share one table. */
 export const users = pgTable(
@@ -113,6 +113,12 @@ export const mediaItems = pgTable("media_items", {
   // Type-specific extras (album, episode count, …); null for legacy/unknown
   // types (media-platform-v2 Req 1.1, 1.4). Validated into the domain union.
   metadata: jsonb("metadata").$type<MediaItemMetadata>(),
+  // Externally-sourced enrichment (cast, pages, scores, …); null until resolved
+  // (media-detail-enrichment Req 1, 2.5). Validated into the domain union.
+  enrichment: jsonb("enrichment").$type<MediaEnrichment>(),
+  // When enrichment was last attempted; null ⇒ never attempted/eligible, set ⇒
+  // resolved or definitively empty, so the lookup is not repeated (Req 2.3).
+  enrichmentCheckedAt: timestamp("enrichment_checked_at", { withTimezone: true }),
   // Total consumable units (pages/episodes/runtime) backing progress (Req 3.1).
   totalUnits: integer("total_units"),
 }, (t) => [
