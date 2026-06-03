@@ -18,4 +18,23 @@ describe("itemBackTarget (cover-art / trending)", () => {
     expect(itemBackTarget("constructor")).toEqual({ href: "/library", label: "Library" });
     expect(itemBackTarget("toString")).toEqual({ href: "/library", label: "Library" });
   });
+
+  it("preserves the origin's query/type so back-navigation keeps the results", () => {
+    expect(itemBackTarget("search", { q: "dune" })).toEqual({
+      href: "/search?q=dune",
+      label: "Search",
+    });
+    expect(itemBackTarget("search", { q: "the matrix", type: "tv_movie" })).toEqual({
+      href: "/search?q=the%20matrix&type=tv_movie",
+      label: "Search",
+    });
+  });
+
+  it("drops blank/absent preserved params and keeps a clean base href", () => {
+    expect(itemBackTarget("search", { q: "", type: undefined })).toEqual({
+      href: "/search",
+      label: "Search",
+    });
+    expect(itemBackTarget("search", { q: "   " })).toEqual({ href: "/search", label: "Search" });
+  });
 });
