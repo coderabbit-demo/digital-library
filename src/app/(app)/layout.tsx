@@ -22,7 +22,7 @@ export default async function AppLayout({
       <a href="#main-content" className="skip-link focus-visible:ring-2 focus-visible:ring-ring">
         Skip to content
       </a>
-      <AppNav userName={user.name} avatarColor={user.avatarColor} />
+      <AppNav userName={user.name} avatarColor={user.avatarColor} avatarUrl={user.avatarUrl} />
       <main
         id="main-content"
         className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6"

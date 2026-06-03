@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD CONSTRAINT "users_avatar_url_https_check" CHECK ("users"."avatar_url" is null or "users"."avatar_url" like 'https://%');

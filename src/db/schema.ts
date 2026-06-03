@@ -32,12 +32,17 @@ export const users = pgTable(
     // Nullable: community actors have no email. Unique among non-null values.
     email: text("email"),
     avatarColor: text("avatar_color").notNull(),
+    // Optional profile picture URL (https) — populated from Google sign-in
+    // (google-auth Req 9); null for email/password members.
+    avatarUrl: text("avatar_url"),
     bio: text("bio").notNull().default(""),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     unique("users_email_unique").on(t.email),
     check("users_kind_check", sql`${t.kind} in ('member', 'community')`),
+    // Avatar URLs are https-only (validated in code); enforce it at the DB too.
+    check("users_avatar_url_https_check", sql`${t.avatarUrl} is null or ${t.avatarUrl} like 'https://%'`),
   ],
 );
 

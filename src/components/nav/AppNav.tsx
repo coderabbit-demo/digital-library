@@ -6,6 +6,7 @@ import { useState } from "react";
 import { BookMarked, Heart, Home, LogOut, Star, TrendingUp, type LucideIcon } from "lucide-react";
 import { AddItemDialog } from "@/components/library/AddItemDialog";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/UserAvatar";
 import { appConfig } from "@/lib/app-config";
 import { cn } from "@/lib/utils";
 import { isNavItemActive, NAV_ITEMS, type NavIcon } from "./nav-items";
@@ -13,6 +14,8 @@ import { isNavItemActive, NAV_ITEMS, type NavIcon } from "./nav-items";
 export interface AppNavProps {
   userName: string;
   avatarColor: string;
+  /** Profile picture URL (https) when known; falls back to the initial avatar. */
+  avatarUrl?: string | null;
 }
 
 const NAV_ICONS: Record<NavIcon, LucideIcon> = {
@@ -29,7 +32,7 @@ const NAV_ICONS: Record<NavIcon, LucideIcon> = {
  * navigation using the reference IA. Client-routed; the active tab is marked
  * with aria-current; sign-out posts to the logout endpoint.
  */
-export function AppNav({ userName, avatarColor }: AppNavProps): React.JSX.Element {
+export function AppNav({ userName, avatarColor, avatarUrl }: AppNavProps): React.JSX.Element {
   const pathname = usePathname();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
@@ -68,13 +71,7 @@ export function AppNav({ userName, avatarColor }: AppNavProps): React.JSX.Elemen
             aria-label={`${userName} — profile and account`}
             className="flex items-center gap-2 rounded-md px-1 py-1 hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span
-              aria-hidden="true"
-              className="grid size-8 place-items-center rounded-full text-sm font-semibold text-white"
-              style={{ backgroundColor: avatarColor }}
-            >
-              {(userName.trim()[0] ?? "?").toUpperCase()}
-            </span>
+            <UserAvatar name={userName} color={avatarColor} src={avatarUrl} />
             <span className="hidden text-sm font-medium sm:inline">{userName}</span>
           </Link>
           <Button variant="ghost" size="icon" onClick={signOut} disabled={signingOut} aria-label="Sign out">

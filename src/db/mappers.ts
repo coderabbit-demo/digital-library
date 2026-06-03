@@ -33,6 +33,7 @@ export function toUser(row: UserRow): User {
     name: row.name,
     email: row.email,
     avatarColor: row.avatarColor,
+    avatarUrl: row.avatarUrl ?? null,
     bio: row.bio,
   };
 }

@@ -19,6 +19,7 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  // Protect everything except the auth pages, the auth API, and framework/static assets.
-  matcher: ["/((?!login|register|api|_next/static|_next/image|favicon.ico).*)"],
+  // Protect everything except the auth pages, the auth API, the Google OAuth
+  // routes (/auth/google/*), and framework/static assets.
+  matcher: ["/((?!login|register|api|auth|_next/static|_next/image|favicon.ico).*)"],
 };

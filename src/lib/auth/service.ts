@@ -3,13 +3,14 @@
  * session primitives. Registration runs in a transaction (atomic user +
  * credential) and relies on the unique email constraint as a backstop.
  */
-import { eq } from "drizzle-orm";
-import type { Db } from "@/db/client";
+import { and, eq } from "drizzle-orm";
+import type { Db, DbExecutor } from "@/db/client";
 import { isUniqueViolation } from "@/db/errors";
 import { findPasswordCredential, normalizeEmail } from "@/db/queries";
 import { authIdentities, users } from "@/db/schema";
 import { toUser } from "@/db/mappers";
 import type { User } from "@/lib/types";
+import type { GoogleProfile } from "./google";
 import { hashPassword, verifyPassword } from "./password";
 
 const AVATAR_COLORS = ["#2f7d7e", "#8b4a62", "#7a6426", "#4f6f9f", "#6b7650"];
@@ -99,4 +100,72 @@ export async function loginMember(db: Db, input: LoginInput): Promise<User | nul
   if (!credential) return null;
   const valid = await verifyPassword(input.password, credential.passwordHash);
   return valid ? credential.user : null;
+}
+
+/** Find the user behind an existing google identity for this account id, if any. */
+async function findUserByGoogleSub(db: DbExecutor, sub: string): Promise<User | null> {
+  const [identity] = await db
+    .select({ userId: authIdentities.userId })
+    .from(authIdentities)
+    .where(and(eq(authIdentities.provider, "google"), eq(authIdentities.providerAccountId, sub)))
+    .limit(1);
+  if (!identity) return null;
+  const [row] = await db.select().from(users).where(eq(users.id, identity.userId)).limit(1);
+  return row ? toUser(row) : null;
+}
+
+/**
+ * Map a verified Google profile to a platform user (google-auth DL-80): match an
+ * existing google identity by account id; else link to a member with the same
+ * (verified) email; else create a new member. Persists the picture on create and
+ * fills it on link only when empty (never clobbering). The caller validates the
+ * ID token first, so the email is verified. Runs in a transaction and tolerates
+ * a concurrent-creation race by re-resolving on a unique violation.
+ */
+export async function resolveGoogleUser(db: Db, profile: GoogleProfile): Promise<User> {
+  const email = normalizeEmail(profile.email);
+  try {
+    return await db.transaction(async (tx) => {
+      const existingBySub = await findUserByGoogleSub(tx, profile.sub);
+      if (existingBySub) return existingBySub;
+
+      if (profile.emailVerified) {
+        const [member] = await tx.select().from(users).where(eq(users.email, email)).limit(1);
+        if (member) {
+          await tx
+            .insert(authIdentities)
+            .values({ userId: member.id, provider: "google", providerAccountId: profile.sub });
+          if (!member.avatarUrl && profile.picture) {
+            await tx.update(users).set({ avatarUrl: profile.picture }).where(eq(users.id, member.id));
+            return toUser({ ...member, avatarUrl: profile.picture });
+          }
+          return toUser(member);
+        }
+      }
+
+      const [row] = await tx
+        .insert(users)
+        .values({
+          kind: "member",
+          name: profile.name,
+          email,
+          avatarColor: pickAvatarColor(email),
+          avatarUrl: profile.picture,
+          bio: "",
+        })
+        .returning();
+      if (!row) throw new Error("failed to create user");
+      await tx
+        .insert(authIdentities)
+        .values({ userId: row.id, provider: "google", providerAccountId: profile.sub });
+      return toUser(row);
+    });
+  } catch (error) {
+    // A concurrent sign-in can win the identity/email insert; re-resolve by sub.
+    if (isUniqueViolation(error)) {
+      const raced = await findUserByGoogleSub(db, profile.sub);
+      if (raced) return raced;
+    }
+    throw error;
+  }
 }
