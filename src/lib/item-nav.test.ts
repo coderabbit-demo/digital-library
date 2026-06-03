@@ -11,6 +11,10 @@ describe("itemBackTarget (cover-art / trending)", () => {
     expect(itemBackTarget("reviews")).toEqual({ href: "/reviews", label: "Reviews" });
   });
 
+  it("maps the Home origin (e.g. the home Trending section)", () => {
+    expect(itemBackTarget("home")).toEqual({ href: "/", label: "Home" });
+  });
+
   it("falls back to Library for unknown, missing, or prototype-key origins", () => {
     expect(itemBackTarget(undefined)).toEqual({ href: "/library", label: "Library" });
     expect(itemBackTarget("bogus")).toEqual({ href: "/library", label: "Library" });
