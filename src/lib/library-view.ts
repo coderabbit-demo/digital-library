@@ -38,6 +38,16 @@ export function filterShelfItemsByType(items: ShelfItem[], activeType: string): 
   return items.filter((i) => i.item.type === activeType);
 }
 
+/** Scoped text search over a page's items by title or creator, case-insensitively
+ *  (media-search Req 5.2); an empty query passes everything through. */
+export function filterShelfItemsByQuery(items: ShelfItem[], query: string): ShelfItem[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return items;
+  return items.filter(
+    (i) => i.item.title.toLowerCase().includes(q) || i.item.creator.toLowerCase().includes(q),
+  );
+}
+
 export function resolveShelf(raw: string | undefined): string {
   return SHELF_FILTERS.some((f) => f.value === raw) ? (raw as string) : "all";
 }
