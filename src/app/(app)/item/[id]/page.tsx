@@ -14,6 +14,7 @@ import { itemBackTarget } from "@/lib/item-nav";
 import { statusLabel } from "@/lib/library-view";
 import { formatMetaLine } from "@/lib/media-metadata";
 import { mediaTypeLabel } from "@/lib/media-type";
+import { firstParam } from "@/lib/search-params";
 
 /**
  * Media item detail page (media-detail DL-68): full metadata/description for one
@@ -25,14 +26,15 @@ export default async function ItemPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string | string[]; q?: string | string[]; type?: string | string[] }>;
 }): Promise<React.JSX.Element> {
   const user = await getSessionUser();
   if (!user) redirect("/login");
 
   const { id } = await params;
-  const { from } = await searchParams;
-  const back = itemBackTarget(from);
+  const { from, q, type } = await searchParams;
+  // Preserve the origin's query/type so "Back to …" returns to the same results.
+  const back = itemBackTarget(firstParam(from), { q: firstParam(q), type: firstParam(type) });
   const db = getDb();
   const item = await findMediaById(db, id);
   if (!item) notFound();

@@ -97,6 +97,7 @@ export default async function SearchPage({
                   item={item}
                   alreadyInLibrary={owned.has(trendingItemKey(item))}
                   detailsFrom="search"
+                  detailsParams={activeType === "all" ? { q: query } : { q: query, type: activeType }}
                 />
               </li>
             ))}

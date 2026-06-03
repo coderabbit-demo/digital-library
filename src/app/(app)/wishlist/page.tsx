@@ -41,38 +41,38 @@ export default async function WishlistPage({
       <h1 id="wishlist-title" className="text-2xl font-medium">
         Wishlist
       </h1>
-      {items.length === 0 && !query ? (
-        <p className="py-4 text-muted-foreground">Nothing on your wishlist yet.</p>
+      {/* Scoped search stays available even when the wishlist is empty so it
+          returns a graceful "no matches" rather than the global provider search. */}
+      <div className="flex flex-col gap-3">
+        <MediaSearchBox
+          action="/wishlist"
+          query={query}
+          ariaLabel="Search your wishlist"
+          hidden={activeType === "all" ? {} : { type: activeType }}
+        />
+        {items.length > 0 ? (
+          <MediaTypeFilter
+            options={options}
+            activeValue={activeType}
+            hrefFor={hrefFor}
+            ariaLabel="Filter wishlist by media type"
+          />
+        ) : null}
+      </div>
+      {visible.length === 0 ? (
+        items.length === 0 && !query ? (
+          <p className="py-4 text-muted-foreground">Nothing on your wishlist yet.</p>
+        ) : (
+          <p className="py-4 text-muted-foreground">No wishlist items match your search.</p>
+        )
       ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            <MediaSearchBox
-              action="/wishlist"
-              query={query}
-              ariaLabel="Search your wishlist"
-              hidden={activeType === "all" ? {} : { type: activeType }}
-            />
-            {items.length > 0 ? (
-              <MediaTypeFilter
-                options={options}
-                activeValue={activeType}
-                hrefFor={hrefFor}
-                ariaLabel="Filter wishlist by media type"
-              />
-            ) : null}
-          </div>
-          {visible.length === 0 ? (
-            <p className="py-4 text-muted-foreground">No wishlist items match your search.</p>
-          ) : (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map(({ entry, item }) => (
-                <li key={entry.id}>
-                  <LibraryCard item={item} entry={entry} tags={tagsByEntry.get(entry.id) ?? []} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map(({ entry, item }) => (
+            <li key={entry.id}>
+              <LibraryCard item={item} entry={entry} tags={tagsByEntry.get(entry.id) ?? []} />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

@@ -37,33 +37,34 @@ export default async function LibraryPage({
       <h1 id="library-title" className="text-2xl font-medium">
         My Library
       </h1>
-      {items.length === 0 && !query ? (
-        <p className="py-4 text-muted-foreground">Nothing here yet. Use “Add item” to get started.</p>
+      {/* The scoped search box is always available so searching an empty library
+          stays scoped (a graceful "no matches") instead of falling through to the
+          global provider search. The type filter only appears when there are items. */}
+      <div className="flex flex-col gap-3">
+        <MediaSearchBox
+          action="/library"
+          query={query}
+          ariaLabel="Search your library"
+          hidden={activeType === "all" ? {} : { type: activeType }}
+        />
+        {items.length > 0 ? (
+          <MediaTypeFilter options={options} activeValue={activeType} hrefFor={hrefFor} />
+        ) : null}
+      </div>
+      {visible.length === 0 ? (
+        items.length === 0 && !query ? (
+          <p className="py-4 text-muted-foreground">Nothing here yet. Use “Add item” to get started.</p>
+        ) : (
+          <p className="py-4 text-muted-foreground">No items match your search.</p>
+        )
       ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            <MediaSearchBox
-              action="/library"
-              query={query}
-              ariaLabel="Search your library"
-              hidden={activeType === "all" ? {} : { type: activeType }}
-            />
-            {items.length > 0 ? (
-              <MediaTypeFilter options={options} activeValue={activeType} hrefFor={hrefFor} />
-            ) : null}
-          </div>
-          {visible.length === 0 ? (
-            <p className="py-4 text-muted-foreground">No items match your search.</p>
-          ) : (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map(({ entry, item }) => (
-                <li key={entry.id}>
-                  <LibraryCard item={item} entry={entry} tags={tagsByEntry.get(entry.id) ?? []} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map(({ entry, item }) => (
+            <li key={entry.id}>
+              <LibraryCard item={item} entry={entry} tags={tagsByEntry.get(entry.id) ?? []} />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );

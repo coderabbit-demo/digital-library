@@ -36,38 +36,38 @@ export default async function ReviewsPage({
       <h1 id="reviews-title" className="text-2xl font-medium">
         Reviews
       </h1>
-      {reviewed.length === 0 && !query ? (
-        <p className="py-4 text-muted-foreground">You haven’t reviewed anything yet.</p>
+      {/* Scoped search stays available even with no reviews yet so it returns a
+          graceful "no matches" rather than the global provider search. */}
+      <div className="flex flex-col gap-3">
+        <MediaSearchBox
+          action="/reviews"
+          query={query}
+          ariaLabel="Search your reviews"
+          hidden={activeType === "all" ? {} : { type: activeType }}
+        />
+        {reviewed.length > 0 ? (
+          <MediaTypeFilter
+            options={options}
+            activeValue={activeType}
+            hrefFor={hrefFor}
+            ariaLabel="Filter reviews by media type"
+          />
+        ) : null}
+      </div>
+      {visible.length === 0 ? (
+        reviewed.length === 0 && !query ? (
+          <p className="py-4 text-muted-foreground">You haven’t reviewed anything yet.</p>
+        ) : (
+          <p className="py-4 text-muted-foreground">No reviews match your search.</p>
+        )
       ) : (
-        <>
-          <div className="flex flex-col gap-3">
-            <MediaSearchBox
-              action="/reviews"
-              query={query}
-              ariaLabel="Search your reviews"
-              hidden={activeType === "all" ? {} : { type: activeType }}
-            />
-            {reviewed.length > 0 ? (
-              <MediaTypeFilter
-                options={options}
-                activeValue={activeType}
-                hrefFor={hrefFor}
-                ariaLabel="Filter reviews by media type"
-              />
-            ) : null}
-          </div>
-          {visible.length === 0 ? (
-            <p className="py-4 text-muted-foreground">No reviews match your search.</p>
-          ) : (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map(({ entry, item }) => (
-                <li key={entry.id}>
-                  <LibraryCard item={item} entry={entry} tags={tagsByEntry.get(entry.id) ?? []} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visible.map(({ entry, item }) => (
+            <li key={entry.id}>
+              <LibraryCard item={item} entry={entry} tags={tagsByEntry.get(entry.id) ?? []} />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
