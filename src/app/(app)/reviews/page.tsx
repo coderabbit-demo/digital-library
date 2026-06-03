@@ -36,7 +36,7 @@ export default async function ReviewsPage({
       <h1 id="reviews-title" className="text-2xl font-medium">
         Reviews
       </h1>
-      {reviewed.length === 0 ? (
+      {reviewed.length === 0 && !query ? (
         <p className="py-4 text-muted-foreground">You haven’t reviewed anything yet.</p>
       ) : (
         <>
@@ -47,12 +47,14 @@ export default async function ReviewsPage({
               ariaLabel="Search your reviews"
               hidden={activeType === "all" ? {} : { type: activeType }}
             />
-            <MediaTypeFilter
-              options={options}
-              activeValue={activeType}
-              hrefFor={hrefFor}
-              ariaLabel="Filter reviews by media type"
-            />
+            {reviewed.length > 0 ? (
+              <MediaTypeFilter
+                options={options}
+                activeValue={activeType}
+                hrefFor={hrefFor}
+                ariaLabel="Filter reviews by media type"
+              />
+            ) : null}
           </div>
           {visible.length === 0 ? (
             <p className="py-4 text-muted-foreground">No reviews match your search.</p>
