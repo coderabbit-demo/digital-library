@@ -63,8 +63,8 @@ function tmdbProvider(kind: TmdbKind): SearchProvider {
     label: meta.label,
     mediaType: "tv_movie",
     isConfigured: (env) => text(env.TMDB_API_KEY).length > 0,
-    async search(query: string, { limit, fetchImpl }: SearchFetchOptions): Promise<TrendingItem[]> {
-      const key = text(process.env.TMDB_API_KEY);
+    async search(query: string, { limit, fetchImpl, env }: SearchFetchOptions): Promise<TrendingItem[]> {
+      const key = text((env ?? process.env).TMDB_API_KEY);
       if (!key) throw new Error("TMDB_API_KEY is not configured");
       const url =
         `${SEARCH_BASE}/${kind}?query=${encodeURIComponent(query)}&include_adult=false` +

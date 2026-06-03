@@ -43,6 +43,11 @@ describe("tmdb search (media-search DL-82)", () => {
       expect(url).toContain("api.themoviedb.org/3/search/movie");
       expect(url).toContain("query=dune");
       expect(url).toContain("api_key=test-key");
+
+      // The key comes from the passed env (same source as isConfigured), not just process.env.
+      const fetch2 = vi.fn(async () => ({ ok: true, json: async () => movies }) as unknown as Response) as unknown as typeof fetch;
+      await tmdbMoviesSearchProvider.search("dune", { limit: 5, fetchImpl: fetch2, env: { TMDB_API_KEY: "env-key" } });
+      expect(String((fetch2 as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[0])).toContain("api_key=env-key");
     } finally {
       if (prev === undefined) delete process.env.TMDB_API_KEY;
       else process.env.TMDB_API_KEY = prev;

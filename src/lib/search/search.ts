@@ -35,7 +35,7 @@ export async function searchMedia(opts: SearchFeedOptions): Promise<TrendingResp
       const base = { source: provider.id, mediaType: provider.mediaType, label: provider.label };
       if (!provider.isConfigured(env)) return { ...base, status: "unconfigured", items: [] };
       try {
-        const items = await provider.search(query, { limit, fetchImpl: opts.fetchImpl });
+        const items = await provider.search(query, { limit, fetchImpl: opts.fetchImpl, env });
         return { ...base, status: "ok", items };
       } catch (error) {
         console.error(`search provider "${provider.id}" failed:`, error);

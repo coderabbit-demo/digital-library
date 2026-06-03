@@ -13,6 +13,8 @@ export interface SearchFetchOptions {
   limit: number;
   /** Injectable fetch for testing; defaults to the global fetch. */
   fetchImpl?: typeof fetch;
+  /** The same env used for `isConfigured`, so credential reads stay consistent. */
+  env?: Record<string, string | undefined>;
 }
 
 export interface SearchProvider {
