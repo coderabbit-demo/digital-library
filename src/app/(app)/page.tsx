@@ -1,24 +1,12 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
-import { AchievementsSection } from "@/components/home/AchievementsSection";
-import { DashboardHeader } from "@/components/home/DashboardHeader";
 import { Feed } from "@/components/home/Feed";
 import { FeedFilter } from "@/components/home/FeedFilter";
-import { StatCards } from "@/components/home/StatCards";
 import { TrendingSection } from "@/components/trending/TrendingSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getDb } from "@/db/client";
-import {
-  countFinishedBetween,
-  getActiveGoal,
-  listActivityDatesForUser,
-  listEntriesForUser,
-  listFeed,
-  listMedia,
-  listUserAchievements,
-} from "@/db/queries";
-import { evaluateAchievements } from "@/lib/achievements";
+import { listEntriesForUser, listFeed, listMedia } from "@/db/queries";
 import { getSessionUser } from "@/lib/auth/current-user";
-import { computeGoalProgress, DEFAULT_GOAL_PERIOD } from "@/lib/goals";
 import {
   distinctMediaTypes,
   mediaTypeOptions,
@@ -26,14 +14,13 @@ import {
   typeFilterHrefFactory,
 } from "@/lib/media-type";
 import { firstParam } from "@/lib/search-params";
-import { computeStreaks } from "@/lib/streaks";
-import { computeUserStats } from "@/lib/stats";
 import { ownedTrendingKeys } from "@/lib/trending/ownership";
 
 /**
- * Home dashboard (DL-48): a live goals/stats/achievements summary plus the
- * retained community feed (Req 7). All stats are computed from the signed-in
- * user's own data; the feed and its media-type filter are read server-side.
+ * Home dashboard: a welcoming hero alongside the community feed, with the
+ * Trending Now section below. The feed and its media-type filter are read
+ * server-side; the feed (`?type=`) and Trending (`?trending=`) filters are
+ * independent and each preserves the other's selection on this shared route.
  */
 export default async function HomePage({
   searchParams,
@@ -46,35 +33,13 @@ export default async function HomePage({
   const { type, trending } = await searchParams;
   const trendingType = firstParam(trending);
   const db = getDb();
-  const now = new Date();
-  const year = String(now.getUTCFullYear());
-  const yearStart = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
-  const yearEnd = new Date(Date.UTC(now.getUTCFullYear() + 1, 0, 1));
 
-  const [media, entries, activityDates, persisted, goal, finishedThisYear] = await Promise.all([
-    listMedia(db),
-    listEntriesForUser(db, user.id),
-    listActivityDatesForUser(db, user.id),
-    listUserAchievements(db, user.id),
-    getActiveGoal(db, user.id, DEFAULT_GOAL_PERIOD, year),
-    countFinishedBetween(db, user.id, yearStart, yearEnd),
-  ]);
-
-  const stats = computeUserStats(entries);
-  const streaks = computeStreaks(activityDates, now.toISOString());
-  const goalProgress = computeGoalProgress(goal, finishedThisYear);
-  const achievements = evaluateAchievements(
-    { stats, streaks, goalProgress },
-    new Map(persisted.map((a) => [a.achievementKey, a.achievedAt])),
-  );
+  const [media, entries] = await Promise.all([listMedia(db), listEntriesForUser(db, user.id)]);
 
   const options = mediaTypeOptions(distinctMediaTypes(media));
   const activeType = resolveActiveType(firstParam(type), options);
   const feed = await listFeed(db, activeType === "all" ? {} : { type: activeType });
   const ownedTrending = ownedTrendingKeys(entries, media);
-  // The community feed uses `?type=`; the Trending section (DL-73) uses
-  // `?trending=`. Each control preserves the other's selection so they filter
-  // independently on this shared route (Req 3.3).
   const feedHrefFor = typeFilterHrefFactory({
     basePath: "/",
     param: "type",
@@ -88,19 +53,27 @@ export default async function HomePage({
 
   return (
     <>
-      <DashboardHeader userName={user.name} />
-      <StatCards stats={stats} goalProgress={goalProgress} streaks={streaks} />
-      <AchievementsSection achievements={achievements} />
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <Image
+          src="/CommuterReader.png"
+          alt="A reader enjoying a book on their commute"
+          width={1408}
+          height={768}
+          priority
+          sizes="(min-width: 1024px) 50vw, 100vw"
+          className="h-auto w-full rounded-xl border border-border object-cover"
+        />
+        <Card>
+          <CardHeader>
+            <CardTitle id="feed-title">Community feed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FeedFilter options={options} activeValue={activeType} hrefFor={feedHrefFor} />
+            <Feed entries={feed} />
+          </CardContent>
+        </Card>
+      </div>
       <TrendingSection owned={ownedTrending} activeType={trendingType ?? "all"} hrefFor={trendingHrefFor} />
-      <Card>
-        <CardHeader>
-          <CardTitle id="feed-title">Community feed</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <FeedFilter options={options} activeValue={activeType} hrefFor={feedHrefFor} />
-          <Feed entries={feed} />
-        </CardContent>
-      </Card>
     </>
   );
 }
