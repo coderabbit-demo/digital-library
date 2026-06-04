@@ -1,8 +1,10 @@
 /**
- * TMDB enrichment for movies and TV (media-detail-enrichment Req 1.2). Keyed by
- * the existing TMDB_API_KEY. Searches movie then TV for a match, then fetches
- * the detail (with credits appended) and normalizes it — including the resolved
- * `tmdbId`, which drives the per-view review-excerpt fetch. Never throws.
+ * TMDB enrichment for movies and TV (movie-tv-types Req 1, 5, 6). Keyed by the
+ * existing TMDB_API_KEY. Queries the endpoint matching the item's precise type
+ * (movie or tv); a legacy combined item tries movie then TV. Fetches the detail
+ * (with credits appended) and normalizes it — including the resolved `tmdbId`
+ * and `tmdbType` (which drive the review-excerpt fetch), season/episode counts
+ * for TV, and a synopsis from the overview. Never throws.
  */
 import { fetchJson, isRecord } from "@/lib/covers/http";
 import {
@@ -23,13 +25,13 @@ const DETAIL_BASE = "https://api.themoviedb.org/3";
 
 type TmdbKind = "movie" | "tv";
 
-/** Pure: a TMDB detail payload (with appended credits) → a tv_movie partial. */
+/** Pure: a TMDB detail payload (with appended credits) → a video partial. */
 export function normalizeTmdbDetail(
   kind: TmdbKind,
   id: number,
   payload: unknown,
-): EnrichmentOf<"tv_movie"> | null {
-  if (!isRecord(payload)) return compactEnrichment("tv_movie", { tmdbId: id, tmdbType: kind });
+): EnrichmentOf<"video"> | null {
+  if (!isRecord(payload)) return compactEnrichment("video", { tmdbId: id, tmdbType: kind });
 
   const runtime =
     kind === "movie"
@@ -50,7 +52,11 @@ export function normalizeTmdbDetail(
         )
       : undefined;
 
-  return compactEnrichment("tv_movie", {
+  // Season/episode counts apply to TV only (movies never carry them).
+  const seasons = kind === "tv" ? nonNegInt(payload.number_of_seasons) : undefined;
+  const episodes = kind === "tv" ? nonNegInt(payload.number_of_episodes) : undefined;
+
+  return compactEnrichment("video", {
     tmdbId: id,
     tmdbType: kind,
     runtimeMinutes: runtime,
@@ -60,6 +66,9 @@ export function normalizeTmdbDetail(
     cast,
     voteAverage: numberInRange(payload.vote_average, 0, 10),
     voteCount: nonNegInt(payload.vote_count),
+    seasons,
+    episodes,
+    synopsis: text(payload.overview),
   });
 }
 
@@ -73,18 +82,25 @@ export function isTmdbConfigured(env: Record<string, string | undefined>): boole
   return (text(env.TMDB_API_KEY) ?? "").length > 0;
 }
 
+/** Endpoints to try for an item type: the precise one, or both for legacy. */
+function tmdbKindsFor(type: string | undefined): readonly TmdbKind[] {
+  if (type === "movie") return ["movie"];
+  if (type === "tv") return ["tv"];
+  return ["movie", "tv"]; // legacy "tv_movie" (or unspecified): try both
+}
+
 /** Resolve a movie/TV item via TMDB and return its enrichment, or null. */
 export async function enrichFromTmdb(
-  item: { title: string; creator: string },
+  item: { type?: string; title: string; creator: string },
   deps: EnrichmentFetchDeps = {},
-): Promise<EnrichmentOf<"tv_movie"> | null> {
+): Promise<EnrichmentOf<"video"> | null> {
   const env = enrichmentEnv(deps);
   const key = text(env.TMDB_API_KEY);
   if (!key) return null;
   const cd = coverDeps(deps);
   const query = encodeURIComponent(item.title.trim());
 
-  for (const kind of ["movie", "tv"] as const) {
+  for (const kind of tmdbKindsFor(item.type)) {
     const search = await fetchJson(
       `${SEARCH_BASE}/${kind}?query=${query}&include_adult=false&api_key=${encodeURIComponent(key)}`,
       cd,

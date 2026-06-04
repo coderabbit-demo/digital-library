@@ -27,7 +27,7 @@ const sources: TrendingSourceResult[] = [
     status: "ok",
     items: [item("itunes-music", "music", "Album")],
   },
-  { source: "tmdb", mediaType: "tv_movie", label: "Movies", status: "error", items: [] },
+  { source: "tmdb", mediaType: "movie", label: "Movies", status: "error", items: [] },
   { source: "empty", mediaType: "podcast", label: "Podcasts", status: "ok", items: [] },
 ];
 
@@ -51,7 +51,7 @@ describe("filterResultSourcesByType", () => {
   });
 
   it("returns no sources when nothing matches", () => {
-    expect(filterResultSourcesByType(ok, "tv_movie")).toEqual([]);
+    expect(filterResultSourcesByType(ok, "movie")).toEqual([]);
   });
 
   it("does not mutate the input sources", () => {

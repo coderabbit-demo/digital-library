@@ -63,12 +63,13 @@ describe("searchMedia (media-search DL-82)", () => {
     expect(search).not.toHaveBeenCalled();
   });
 
-  it("registers one provider per media type (books, music, podcast, tv_movie)", () => {
+  it("registers one provider per media type (books, music, podcast, movie, tv)", () => {
     expect([...new Set(SEARCH_PROVIDERS.map((p) => p.mediaType))].sort()).toEqual([
       "ebook",
+      "movie",
       "music",
       "podcast",
-      "tv_movie",
+      "tv",
     ]);
   });
 });

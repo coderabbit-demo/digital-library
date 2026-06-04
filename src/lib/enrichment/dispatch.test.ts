@@ -38,7 +38,24 @@ describe("enrichItem dispatch", () => {
       { type: "tv_movie", title: "The Matrix", creator: "" },
       { fetchImpl, env: { TMDB_API_KEY: "k" } },
     );
-    expect(out).toMatchObject({ kind: "tv_movie", tmdbId: 603, runtimeMinutes: 136, voteAverage: 8.2 });
+    expect(out).toMatchObject({ kind: "video", tmdbId: 603, runtimeMinutes: 136, voteAverage: 8.2 });
+  });
+
+  it("queries only the movie endpoint for a movie item (type-directed)", async () => {
+    const calls: string[] = [];
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      calls.push(url);
+      if (url.includes("/search/movie")) return { ok: true, json: async () => ({ results: [{ id: 1 }] }) } as unknown as Response;
+      if (url.includes("/movie/1")) return { ok: true, json: async () => ({ runtime: 100 }) } as unknown as Response;
+      return { ok: false, json: async () => ({}) } as unknown as Response;
+    }) as unknown as typeof fetch;
+    const out = await enrichItem(
+      { type: "movie", title: "Heat", creator: "" },
+      { fetchImpl, env: { TMDB_API_KEY: "k" } },
+    );
+    expect(out).toMatchObject({ kind: "video", tmdbType: "movie", runtimeMinutes: 100 });
+    expect(calls.some((u) => u.includes("/search/tv") || u.includes("/tv/"))).toBe(false);
   });
 
   it("returns null for tv_movie when the key is absent (no TMDB call)", async () => {

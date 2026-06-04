@@ -15,7 +15,7 @@ describe("tmdb search (media-search DL-82)", () => {
     expect(items.map((i) => i.title)).toEqual(["Dune", "No Poster"]);
     const dune = items[0]!;
     expect(dune.source).toBe("tmdb-movies");
-    expect(dune.mediaType).toBe("tv_movie");
+    expect(dune.mediaType).toBe("movie");
     expect(dune.listLabel).toBe("Movies");
     expect(dune.creator).toBe("");
     expect(dune.artworkUrl).toBe("https://image.tmdb.org/t/p/w500/dune.jpg");

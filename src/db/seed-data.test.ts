@@ -12,7 +12,7 @@ describe("seed data (DL-16)", () => {
   it("seeds a multi-type starter catalog (Req 1.1, 14.4)", () => {
     expect(seedMediaItems.length).toBe(16);
     const types = new Set(seedMediaItems.map((m) => m.type));
-    expect(types).toEqual(new Set(["ebook", "music", "podcast", "tv_movie"]));
+    expect(types).toEqual(new Set(["ebook", "music", "podcast", "movie", "tv"]));
     // Non-ebook items carry type-specific metadata.
     const music = seedMediaItems.find((m) => m.type === "music");
     expect(music?.metadata?.kind).toBe("music");

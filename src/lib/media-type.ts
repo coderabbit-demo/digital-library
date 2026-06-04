@@ -11,6 +11,9 @@ export const MEDIA_TYPE_LABELS: Record<string, string> = {
   ebook: "Books",
   music: "Music",
   podcast: "Podcasts",
+  movie: "Movies",
+  tv: "TV Shows",
+  // Transitional: retained so any unmigrated legacy row still reads sensibly.
   tv_movie: "TV & Movies",
 };
 

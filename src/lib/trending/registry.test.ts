@@ -19,9 +19,10 @@ describe("trending registry (DL-63, DL-77)", () => {
     ]);
     expect([...new Set(TRENDING_PROVIDERS.map((p) => p.mediaType))].sort()).toEqual([
       "ebook",
+      "movie",
       "music",
       "podcast",
-      "tv_movie",
+      "tv",
     ]);
   });
 

@@ -19,7 +19,7 @@ describe("tmdb provider (trending-podcasts-tv-movies DL-77)", () => {
 
     const dune = items[0]!;
     expect(dune.source).toBe("tmdb-movies");
-    expect(dune.mediaType).toBe("tv_movie");
+    expect(dune.mediaType).toBe("movie");
     expect(dune.listLabel).toBe("Trending Movies");
     expect(dune.rank).toBe(1);
     expect(dune.creator).toBe(""); // TMDB trending carries no creator
@@ -46,8 +46,8 @@ describe("tmdb provider (trending-podcasts-tv-movies DL-77)", () => {
     expect(tmdbMoviesProvider.isConfigured({})).toBe(false);
     expect(tmdbMoviesProvider.isConfigured({ TMDB_API_KEY: "k" })).toBe(true);
     expect(tmdbTvProvider.isConfigured({ TMDB_API_KEY: "k" })).toBe(true);
-    expect(tmdbMoviesProvider.mediaType).toBe("tv_movie");
-    expect(tmdbTvProvider.mediaType).toBe("tv_movie");
+    expect(tmdbMoviesProvider.mediaType).toBe("movie");
+    expect(tmdbTvProvider.mediaType).toBe("tv");
 
     const prev = process.env.TMDB_API_KEY;
     process.env.TMDB_API_KEY = "test-key";

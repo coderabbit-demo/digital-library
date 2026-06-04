@@ -6,7 +6,7 @@ import { ReviewsSection } from "./ReviewsSection";
 describe("EnrichmentDetails (media-detail-enrichment)", () => {
   it("renders only present fields for a movie", () => {
     const { container } = render(
-      <EnrichmentDetails enrichment={{ kind: "tv_movie", runtimeMinutes: 136, genres: ["Sci-Fi"], voteAverage: 8.2 }} />,
+      <EnrichmentDetails enrichment={{ kind: "video", runtimeMinutes: 136, genres: ["Sci-Fi"], voteAverage: 8.2 }} />,
     );
     expect(screen.getByText("Details")).toBeInTheDocument();
     expect(screen.getByText("Runtime")).toBeInTheDocument();

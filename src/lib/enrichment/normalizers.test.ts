@@ -23,18 +23,34 @@ describe("normalizeTmdbDetail", () => {
     expect(out?.voteAverage).toBe(8.2);
   });
 
-  it("uses episode_run_time and first_air_date for TV", () => {
+  it("uses episode_run_time and first_air_date for TV, with season/episode counts and synopsis", () => {
     const out = normalizeTmdbDetail("tv", 1396, {
       episode_run_time: [47],
       first_air_date: "2008-01-20",
       vote_average: 8.9,
+      number_of_seasons: 5,
+      number_of_episodes: 62,
+      overview: "A chemistry teacher turns to crime.",
     });
     expect(out?.runtimeMinutes).toBe(47);
     expect(out?.releaseDate).toBe("2008-01-20");
+    expect(out?.seasons).toBe(5);
+    expect(out?.episodes).toBe(62);
+    expect(out?.synopsis).toBe("A chemistry teacher turns to crime.");
+  });
+
+  it("captures a synopsis but no season/episode counts for movies", () => {
+    const out = normalizeTmdbDetail("movie", 603, {
+      overview: "A hacker learns the truth.",
+      number_of_seasons: 9, // ignored for movies
+    });
+    expect(out?.synopsis).toBe("A hacker learns the truth.");
+    expect(out?.seasons).toBeUndefined();
+    expect(out?.episodes).toBeUndefined();
   });
 
   it("still returns the tmdbId and type when the detail is unusable", () => {
-    expect(normalizeTmdbDetail("movie", 7, null)).toEqual({ kind: "tv_movie", tmdbId: 7, tmdbType: "movie" });
+    expect(normalizeTmdbDetail("movie", 7, null)).toEqual({ kind: "video", tmdbId: 7, tmdbType: "movie" });
   });
 });
 
