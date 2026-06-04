@@ -85,7 +85,10 @@ describe("movie/tv backfill (DL-89)", () => {
   });
 
   it("is a no-op on re-run and preserves library entries, reviews, and tags", async () => {
-    const r = await registerMember(db, { name: "Ava", email: "ava@example.com", password: "readmore" });
+    // Ephemeral, synthetic member credentials (no hardcoded values in the fixture).
+    seq += 1;
+    const member = { name: `Reader ${seq}`, email: `reader-${seq}@test.local`, password: `test-pass-${seq}` };
+    const r = await registerMember(db, member);
     if (!r.ok) throw new Error(r.error);
     const show = await legacyItem({ metadata: { kind: "video", seasons: 1 } });
     const entry = await upsertEntryStatus(db, { userId: r.user.id, mediaItemId: show.id, status: "finished", updatedAt: at });
