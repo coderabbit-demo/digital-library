@@ -35,8 +35,11 @@ export function selectEnrichmentFields(enrichment: MediaEnrichment | null | unde
   if (!enrichment) return [];
   const out: DisplayField[] = [];
   switch (enrichment.kind) {
-    case "tv_movie":
+    case "video":
       if (enrichment.runtimeMinutes !== undefined) push(out, "Runtime", plural(enrichment.runtimeMinutes, "min"));
+      // Seasons/episodes are present only for TV shows (movies never set them).
+      if (enrichment.seasons !== undefined) push(out, "Seasons", plural(enrichment.seasons, "season"));
+      if (enrichment.episodes !== undefined) push(out, "Episodes", plural(enrichment.episodes, "episode"));
       push(out, "Genres", enrichment.genres?.join(", "));
       push(out, "Released", enrichment.releaseDate);
       push(out, "Cast", enrichment.cast?.join(", "));
@@ -68,14 +71,14 @@ export function selectEnrichmentFields(enrichment: MediaEnrichment | null | unde
 
 /** Whether a media type can ever have a reviews/ratings section (Req 4.4). */
 export function typeHasReviewsSection(type: string): boolean {
-  return type === "tv_movie" || type === "ebook";
+  return type === "movie" || type === "tv" || type === "tv_movie" || type === "ebook";
 }
 
 /** Per-source rating badges for the reviews section (scores only; no excerpts). */
 export function selectScoreBadges(enrichment: MediaEnrichment | null | undefined): ScoreBadge[] {
   if (!enrichment) return [];
   const out: ScoreBadge[] = [];
-  if (enrichment.kind === "tv_movie" && enrichment.voteAverage !== undefined) {
+  if (enrichment.kind === "video" && enrichment.voteAverage !== undefined) {
     out.push({
       source: "TMDB",
       value: `${enrichment.voteAverage.toFixed(1)} / 10`,

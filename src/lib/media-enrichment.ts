@@ -8,6 +8,7 @@
  * persisted here; transient review excerpt text is fetched per view, not stored.
  */
 import type { MediaEnrichment } from "@/lib/types";
+import { mediaTypeToMetadataKind } from "@/lib/media-metadata";
 
 function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {};
@@ -51,11 +52,13 @@ const LIST_CAP = 12;
 
 /** Validate an untrusted value into the enrichment union for the given type. */
 export function parseMediaEnrichment(type: string, raw: unknown): MediaEnrichment | null {
+  const kind = mediaTypeToMetadataKind(type);
+  if (!kind) return null;
   const r = asRecord(raw);
-  switch (type) {
-    case "tv_movie":
+  switch (kind) {
+    case "video":
       return {
-        kind: "tv_movie",
+        kind: "video",
         ...opt("tmdbId", asNonNegInt(r.tmdbId)),
         ...opt("tmdbType", r.tmdbType === "movie" || r.tmdbType === "tv" ? r.tmdbType : undefined),
         ...opt("runtimeMinutes", asNonNegInt(r.runtimeMinutes)),
@@ -65,6 +68,9 @@ export function parseMediaEnrichment(type: string, raw: unknown): MediaEnrichmen
         ...opt("cast", asTextList(r.cast, LIST_CAP)),
         ...opt("voteAverage", asNumberInRange(r.voteAverage, 0, 10)),
         ...opt("voteCount", asNonNegInt(r.voteCount)),
+        ...opt("seasons", asNonNegInt(r.seasons)),
+        ...opt("episodes", asNonNegInt(r.episodes)),
+        ...opt("synopsis", asText(r.synopsis)),
       };
     case "ebook":
       return {
@@ -96,7 +102,5 @@ export function parseMediaEnrichment(type: string, raw: unknown): MediaEnrichmen
         ...opt("episodeCount", asNonNegInt(r.episodeCount)),
         ...opt("genre", asText(r.genre)),
       };
-    default:
-      return null;
   }
 }

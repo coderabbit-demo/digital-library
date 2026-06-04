@@ -61,9 +61,9 @@ export async function fetchReviewExcerpts(
   item: Pick<MediaItem, "type"> & { enrichment?: MediaEnrichment | null },
   deps: EnrichmentFetchDeps = {},
 ): Promise<ReviewExcerpt[]> {
-  if (item.type !== "tv_movie") return [];
+  if (item.type !== "movie" && item.type !== "tv" && item.type !== "tv_movie") return [];
   const enrichment = item.enrichment;
-  if (!enrichment || enrichment.kind !== "tv_movie" || typeof enrichment.tmdbId !== "number") return [];
+  if (!enrichment || enrichment.kind !== "video" || typeof enrichment.tmdbId !== "number") return [];
 
   const key = text(enrichmentEnv(deps).TMDB_API_KEY);
   if (!key) return [];

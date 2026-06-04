@@ -56,7 +56,7 @@ describe("normalizeTmdbReviews", () => {
   });
 });
 
-const tmdbEnrichment: MediaEnrichment = { kind: "tv_movie", tmdbId: 603, tmdbType: "movie" };
+const tmdbEnrichment: MediaEnrichment = { kind: "video", tmdbId: 603, tmdbType: "movie" };
 
 describe("fetchReviewExcerpts", () => {
   it("returns [] for non-movie/TV items without calling out", async () => {
@@ -72,7 +72,7 @@ describe("fetchReviewExcerpts", () => {
   it("returns [] when there is no resolved tmdbId", async () => {
     const fetchImpl = vi.fn();
     const out = await fetchReviewExcerpts(
-      { type: "tv_movie", enrichment: { kind: "tv_movie" } },
+      { type: "tv_movie", enrichment: { kind: "video" } },
       { fetchImpl: fetchImpl as unknown as typeof fetch, env: { TMDB_API_KEY: "k" } },
     );
     expect(out).toEqual([]);

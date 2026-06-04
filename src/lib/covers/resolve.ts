@@ -15,6 +15,9 @@ import { resolveOpenLibraryCover } from "./openlibrary";
 const ITUNES_ENTITIES: Record<string, readonly string[]> = {
   music: ["album"],
   podcast: ["podcast"],
+  movie: ["movie"],
+  tv: ["tvSeason"],
+  // Transitional: any unmigrated legacy row still resolves a cover.
   tv_movie: ["movie", "tvSeason"],
 };
 

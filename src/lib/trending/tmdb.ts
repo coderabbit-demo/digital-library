@@ -1,8 +1,8 @@
 /**
  * TMDB — the TV & movie providers for Trending Now (trending-podcasts-tv-movies).
  *
- * Two providers (Trending Movies, Trending TV), both mapped to the `tv_movie`
- * media type, share this client. The API key is read from the environment and
+ * Two providers (Trending Movies, Trending TV), emitting the `movie` and `tv`
+ * media types respectively, share this client. The API key is read from the environment and
  * never leaves the server; responses are cached via the Next Data Cache. TMDB's
  * trending payload carries no creator/cast, so `creator` is left empty (the
  * poster is still surfaced as artwork). `normalizeTmdb` is pure and unit-tested.
@@ -55,7 +55,7 @@ export function normalizeTmdb(payload: unknown, kind: TmdbKind, limit: number): 
     items.push({
       source: meta.source,
       sourceLabel: meta.label,
-      mediaType: "tv_movie",
+      mediaType: kind,
       title,
       creator: "", // TMDB trending carries no creator/cast
       listLabel: meta.label,
@@ -75,7 +75,7 @@ function tmdbProvider(kind: TmdbKind): TrendingProvider {
   return {
     id: meta.source,
     label: meta.label,
-    mediaType: "tv_movie",
+    mediaType: kind,
     isConfigured: (env) => text(env.TMDB_API_KEY).length > 0,
     async fetchTrending({ limit, fetchImpl }: TrendingFetchOptions): Promise<TrendingItem[]> {
       const key = text(process.env.TMDB_API_KEY);

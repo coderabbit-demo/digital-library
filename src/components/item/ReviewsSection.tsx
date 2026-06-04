@@ -18,7 +18,9 @@ export function ReviewsSection({
   if (!typeHasReviewsSection(item.type)) return null;
 
   const badges = selectScoreBadges(item.enrichment);
-  const isTvMovie = item.type === "tv_movie";
+  // Movies and TV (and any legacy combined item) stream TMDB review excerpts;
+  // books show rating scores only.
+  const isVideo = item.type === "movie" || item.type === "tv" || item.type === "tv_movie";
 
   return (
     <section aria-labelledby="reviews-heading" className="flex flex-col gap-3">
@@ -43,7 +45,7 @@ export function ReviewsSection({
         </ul>
       ) : null}
 
-      {isTvMovie ? (
+      {isVideo ? (
         <Suspense
           fallback={
             <p className="text-sm text-muted-foreground" role="status">

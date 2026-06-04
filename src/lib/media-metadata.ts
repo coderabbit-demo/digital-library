@@ -28,10 +28,34 @@ export function isMediaKind(type: string): type is MediaKind {
   return (MEDIA_KINDS as readonly string[]).includes(type);
 }
 
+/**
+ * Map an open media type to its closed metadata/enrichment kind. Films and TV
+ * shows (`movie`, `tv`) and the legacy combined `tv_movie` all share the `video`
+ * shape; other types map to themselves. Unknown types have no shape (null).
+ * This is the single source of truth for the type→kind relationship, so the
+ * stored `kind` is always derived from the type at the boundary (movie-tv-types).
+ */
+export function mediaTypeToMetadataKind(type: string): MediaKind | null {
+  switch (type) {
+    case "ebook":
+    case "music":
+    case "podcast":
+      return type;
+    case "movie":
+    case "tv":
+    case "tv_movie":
+      return "video";
+    default:
+      return null;
+  }
+}
+
 /** Validate an untrusted value into the metadata union for the given type. */
 export function parseMediaMetadata(type: string, raw: unknown): MediaItemMetadata | null {
+  const kind = mediaTypeToMetadataKind(type);
+  if (!kind) return null;
   const r = asRecord(raw);
-  switch (type) {
+  switch (kind) {
     case "ebook": {
       const pages = asPositiveInt(r.pages);
       return pages !== undefined ? { kind: "ebook", pages } : { kind: "ebook" };
@@ -49,17 +73,15 @@ export function parseMediaMetadata(type: string, raw: unknown): MediaItemMetadat
         ...(episodeCount !== undefined ? { episodeCount } : {}),
       };
     }
-    case "tv_movie": {
+    case "video": {
       const runtimeMinutes = asPositiveInt(r.runtimeMinutes);
       const seasons = asPositiveInt(r.seasons);
       return {
-        kind: "tv_movie",
+        kind: "video",
         ...(runtimeMinutes !== undefined ? { runtimeMinutes } : {}),
         ...(seasons !== undefined ? { seasons } : {}),
       };
     }
-    default:
-      return null;
   }
 }
 
@@ -78,7 +100,7 @@ export function formatMetaLine(item: MediaItem): string {
       if (meta.episodeCount !== undefined) parts.push(pluralize(meta.episodeCount, "episode"));
       return parts.join(" · ");
     }
-    case "tv_movie": {
+    case "video": {
       const parts = [item.genre];
       if (meta.seasons !== undefined) parts.push(pluralize(meta.seasons, "season"));
       return parts.join(" · ");

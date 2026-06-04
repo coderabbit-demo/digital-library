@@ -9,7 +9,7 @@ describe("selectEnrichmentFields", () => {
   it("formats tv_movie fields and omits absent ones (no score row)", () => {
     expect(
       selectEnrichmentFields({
-        kind: "tv_movie",
+        kind: "video",
         runtimeMinutes: 136,
         genres: ["Action", "Sci-Fi"],
         cast: ["Keanu Reeves"],
@@ -20,6 +20,19 @@ describe("selectEnrichmentFields", () => {
       { label: "Genres", value: "Action, Sci-Fi" },
       { label: "Cast", value: "Keanu Reeves" },
     ]);
+  });
+
+  it("shows season and episode rows for a TV show", () => {
+    expect(selectEnrichmentFields({ kind: "video", seasons: 5, episodes: 62, genres: ["Drama"] })).toEqual([
+      { label: "Seasons", value: "5 seasons" },
+      { label: "Episodes", value: "62 episodes" },
+      { label: "Genres", value: "Drama" },
+    ]);
+  });
+
+  it("omits season/episode rows for a movie (no such fields)", () => {
+    const fields = selectEnrichmentFields({ kind: "video", runtimeMinutes: 136 });
+    expect(fields.some((f) => f.label === "Seasons" || f.label === "Episodes")).toBe(false);
   });
 
   it("formats ebook fields preferring isbn13", () => {
@@ -50,7 +63,7 @@ describe("typeHasReviewsSection", () => {
 
 describe("selectScoreBadges", () => {
   it("builds a TMDB badge with vote count", () => {
-    expect(selectScoreBadges({ kind: "tv_movie", voteAverage: 8.2, voteCount: 25000 })).toEqual([
+    expect(selectScoreBadges({ kind: "video", voteAverage: 8.2, voteCount: 25000 })).toEqual([
       { source: "TMDB", value: "8.2 / 10", count: "25,000 votes" },
     ]);
   });

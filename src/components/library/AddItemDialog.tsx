@@ -26,7 +26,8 @@ const TYPES = [
   { value: "ebook", label: "Book" },
   { value: "music", label: "Music" },
   { value: "podcast", label: "Podcast" },
-  { value: "tv_movie", label: "TV / Movie" },
+  { value: "movie", label: "Movie" },
+  { value: "tv", label: "TV Show" },
 ];
 
 /**
@@ -70,7 +71,8 @@ export function AddItemDialog(): React.JSX.Element {
   function metadataFor(data: FormData): Record<string, unknown> {
     if (type === "music") return { album: data.get("album") };
     if (type === "podcast") return { show: data.get("show"), episodeCount: Number(data.get("episodeCount")) };
-    if (type === "tv_movie") return { seasons: Number(data.get("seasons")) };
+    if (type === "tv") return { seasons: Number(data.get("seasons")) };
+    if (type === "movie") return {};
     return { pages: Number(data.get("pages")) };
   }
 
@@ -162,7 +164,9 @@ export function AddItemDialog(): React.JSX.Element {
                 <Input id="title" name="title" required />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="creator">{type === "music" ? "Artist" : type === "tv_movie" ? "Director" : "Creator"}</Label>
+                <Label htmlFor="creator">
+                  {type === "music" ? "Artist" : type === "movie" || type === "tv" ? "Director" : "Creator"}
+                </Label>
                 <Input id="creator" name="creator" required />
               </div>
               <div className="flex flex-col gap-1.5">
@@ -194,7 +198,7 @@ export function AddItemDialog(): React.JSX.Element {
                   </div>
                 </>
               ) : null}
-              {type === "tv_movie" ? (
+              {type === "tv" ? (
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="seasons">Seasons</Label>
                   <Input id="seasons" name="seasons" type="number" min="1" />

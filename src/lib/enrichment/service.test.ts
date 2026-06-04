@@ -38,7 +38,7 @@ function media(over: Partial<MediaCreateInput> = {}): MediaCreateInput {
 }
 
 const at = new Date("2026-06-03T19:00:00Z");
-const resolved: MediaEnrichment = { kind: "tv_movie", tmdbId: 603, runtimeMinutes: 136, voteAverage: 8.2 };
+const resolved: MediaEnrichment = { kind: "video", tmdbId: 603, runtimeMinutes: 136, voteAverage: 8.2 };
 
 describe("resolveAndPersistEnrichment (media-detail-enrichment)", () => {
   it("resolves and persists enrichment for an unchecked item", async () => {

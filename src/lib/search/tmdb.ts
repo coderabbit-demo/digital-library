@@ -41,7 +41,7 @@ export function normalizeTmdbSearch(payload: unknown, kind: TmdbKind, limit: num
     items.push({
       source: meta.id,
       sourceLabel: meta.label,
-      mediaType: "tv_movie",
+      mediaType: kind,
       title,
       creator: "",
       listLabel: meta.listLabel,
@@ -61,7 +61,7 @@ function tmdbProvider(kind: TmdbKind): SearchProvider {
   return {
     id: meta.id,
     label: meta.label,
-    mediaType: "tv_movie",
+    mediaType: kind,
     isConfigured: (env) => text(env.TMDB_API_KEY).length > 0,
     async search(query: string, { limit, fetchImpl, env }: SearchFetchOptions): Promise<TrendingItem[]> {
       const key = text((env ?? process.env).TMDB_API_KEY);

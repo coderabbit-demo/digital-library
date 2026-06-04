@@ -58,6 +58,8 @@ export async function enrichItem(
   deps: EnrichmentFetchDeps = {},
 ): Promise<MediaEnrichment | null> {
   switch (item.type) {
+    case "movie":
+    case "tv":
     case "tv_movie":
       return enrichFromTmdb(item, deps);
     case "ebook":

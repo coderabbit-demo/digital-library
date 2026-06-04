@@ -10,21 +10,28 @@
 /** Open set: the UI must never assume the only media type is "ebook" (Req 6.1). */
 export type MediaType = string;
 
-/** Known media-type kinds with type-specific metadata (media-platform-v2 Req 1.1). */
-export const MEDIA_KINDS = ["ebook", "music", "podcast", "tv_movie"] as const;
+/**
+ * Closed set of metadata/enrichment shape discriminators (media-platform-v2 Req
+ * 1.1). These are the per-kind data shapes, NOT the open media-type set: the
+ * `movie` and `tv` media types both map to the shared `video` kind via
+ * `mediaTypeToMetadataKind` (movie-tv-types). The kind is always derived from
+ * the type at the boundary, never read from stored jsonb.
+ */
+export const MEDIA_KINDS = ["ebook", "music", "podcast", "video"] as const;
 export type MediaKind = (typeof MEDIA_KINDS)[number];
 
 /**
  * Type-specific metadata stored on a media item (jsonb), discriminated on the
  * media kind. The open `MediaType` remains the canonical type; this captures
  * the per-kind extras and is validated into this union at the boundary so it is
- * never read as `any`. Unknown types carry no metadata (null).
+ * never read as `any`. Unknown types carry no metadata (null). Films and TV
+ * shows share the `video` shape.
  */
 export type MediaItemMetadata =
   | { kind: "ebook"; pages?: number }
   | { kind: "music"; album?: string }
   | { kind: "podcast"; show?: string; episodeCount?: number }
-  | { kind: "tv_movie"; runtimeMinutes?: number; seasons?: number };
+  | { kind: "video"; runtimeMinutes?: number; seasons?: number };
 
 /**
  * Externally-sourced enrichment for a media item (media-detail-enrichment),
@@ -36,7 +43,7 @@ export type MediaItemMetadata =
  */
 export type MediaEnrichment =
   | {
-      kind: "tv_movie";
+      kind: "video";
       /** Resolved TMDB id; drives the per-view review-excerpt fetch. */
       tmdbId?: number;
       /** Whether the TMDB id is a movie or TV title (selects the reviews endpoint). */
@@ -48,6 +55,11 @@ export type MediaEnrichment =
       cast?: string[];
       voteAverage?: number;
       voteCount?: number;
+      /** TV only: season and episode counts (movie-tv-types Req 5). */
+      seasons?: number;
+      episodes?: number;
+      /** Synopsis from the provider's overview; shown when no description exists (Req 6). */
+      synopsis?: string;
     }
   | {
       kind: "ebook";

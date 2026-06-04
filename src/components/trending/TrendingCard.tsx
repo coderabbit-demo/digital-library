@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpen, Check, Film, Mic, Music, Plus, type LucideIcon } from "lucide-react";
+import { BookOpen, Check, Film, Mic, Music, Plus, Tv, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +16,8 @@ const TYPE_ICON: Record<TrendingMediaType, LucideIcon> = {
   ebook: BookOpen,
   music: Music,
   podcast: Mic,
-  tv_movie: Film,
+  movie: Film,
+  tv: Tv,
 };
 
 type AddState = "idle" | "adding" | "added" | "error";

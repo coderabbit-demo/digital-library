@@ -51,6 +51,11 @@ export default async function ItemPage({
   // First view of a never-enriched item: resolve enrichment on demand and cache
   // it (media-detail-enrichment Req 2). The sections fill in once it lands.
   const needsEnrichment = !item.enrichmentCheckedAt;
+  // Prefer the stored description; fall back to the enriched synopsis (movies/TV)
+  // so externally-added items still show a blurb without duplication (Req 6).
+  const description =
+    item.description ||
+    (item.enrichment?.kind === "video" ? (item.enrichment.synopsis ?? "") : "");
 
   return (
     <section aria-labelledby="item-title" className="flex flex-col gap-6">
@@ -77,7 +82,7 @@ export default async function ItemPage({
           <p className="text-muted-foreground">{item.creator}</p>
           <p className="text-sm text-muted-foreground">{formatMetaLine(item)}</p>
           {typeof entry?.rating === "number" ? <StarRating rating={entry.rating} /> : null}
-          {item.description ? <p className="leading-relaxed">{item.description}</p> : null}
+          {description ? <p className="leading-relaxed">{description}</p> : null}
           {tags.length > 0 ? (
             <ul className="flex flex-wrap gap-1.5">
               {tags.map((tag) => (

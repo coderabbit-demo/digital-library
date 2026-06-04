@@ -12,6 +12,7 @@ import {
   Mic,
   MoreVertical,
   Music,
+  Tv,
   type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +44,8 @@ const TYPE_STYLE: Record<string, { icon: LucideIcon; className: string }> = {
   ebook: { icon: BookOpen, className: "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300" },
   music: { icon: Music, className: "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300" },
   podcast: { icon: Mic, className: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300" },
-  tv_movie: { icon: Film, className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300" },
+  movie: { icon: Film, className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300" },
+  tv: { icon: Tv, className: "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300" },
 };
 
 const STATUS_META: Record<LibraryStatus, { label: string; icon: LucideIcon }> = {

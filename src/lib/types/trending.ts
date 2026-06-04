@@ -11,7 +11,7 @@
 import type { LibraryEntry, LibraryStatus, MediaItemMetadata } from "./domain";
 
 /** Media types served by a provider; open to more as providers are added. */
-export type TrendingMediaType = "ebook" | "music" | "podcast" | "tv_movie";
+export type TrendingMediaType = "ebook" | "music" | "podcast" | "movie" | "tv";
 
 /** One normalized trending entry from any provider. */
 export interface TrendingItem {

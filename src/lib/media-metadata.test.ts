@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMetaLine, isMediaKind, parseMediaMetadata } from "./media-metadata";
+import { formatMetaLine, isMediaKind, mediaTypeToMetadataKind, parseMediaMetadata } from "./media-metadata";
 import type { MediaItem } from "@/lib/types";
 
 const base: MediaItem = {
@@ -23,7 +23,18 @@ describe("media-metadata (DL-42)", () => {
       show: "Reply All",
       episodeCount: 187,
     });
-    expect(parseMediaMetadata("tv_movie", { seasons: 4 })).toEqual({ kind: "tv_movie", seasons: 4 });
+    expect(parseMediaMetadata("tv_movie", { seasons: 4 })).toEqual({ kind: "video", seasons: 4 });
+  });
+
+  it("maps movie/tv (and legacy tv_movie) to the shared video kind", () => {
+    expect(mediaTypeToMetadataKind("movie")).toBe("video");
+    expect(mediaTypeToMetadataKind("tv")).toBe("video");
+    expect(mediaTypeToMetadataKind("tv_movie")).toBe("video");
+    expect(mediaTypeToMetadataKind("ebook")).toBe("ebook");
+    expect(mediaTypeToMetadataKind("vinyl")).toBeNull();
+    // The movie and tv types both yield the video metadata shape.
+    expect(parseMediaMetadata("movie", { runtimeMinutes: 116 })).toEqual({ kind: "video", runtimeMinutes: 116 });
+    expect(parseMediaMetadata("tv", { seasons: 2 })).toEqual({ kind: "video", seasons: 2 });
   });
 
   it("returns null for unknown media types (Req 1.5)", () => {
@@ -39,7 +50,7 @@ describe("media-metadata (DL-42)", () => {
       formatMetaLine({ ...base, type: "podcast", metadata: { kind: "podcast", show: "RA", episodeCount: 12 } }),
     ).toBe("RA · 12 episodes");
     expect(
-      formatMetaLine({ ...base, type: "tv_movie", metadata: { kind: "tv_movie", seasons: 1 } }),
+      formatMetaLine({ ...base, type: "tv", metadata: { kind: "video", seasons: 1 } }),
     ).toBe("Fiction · 1 season");
   });
 });

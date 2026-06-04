@@ -19,7 +19,7 @@ describe("parseMediaEnrichment", () => {
       bogus: "ignored",
     });
     expect(out).toEqual({
-      kind: "tv_movie",
+      kind: "video",
       tmdbId: 603,
       runtimeMinutes: 136,
       genres: ["Action", "Sci-Fi"], // de-duped, blank dropped
@@ -33,7 +33,7 @@ describe("parseMediaEnrichment", () => {
 
   it("rejects out-of-range scores and negative counts", () => {
     const out = parseMediaEnrichment("tv_movie", { voteAverage: 11, voteCount: -3, runtimeMinutes: 1.5 });
-    expect(out).toEqual({ kind: "tv_movie" });
+    expect(out).toEqual({ kind: "video" });
   });
 
   it("parses ebook fields including dual rating sources", () => {

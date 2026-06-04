@@ -77,8 +77,8 @@ export const seedMediaItems: SeedMediaItem[] = [
   { key: "blue", type: "music", title: "Blue", creator: "Joni Mitchell", genre: "Folk", language: "English", description: "Confessional songwriting that defined a generation.", coverTheme: "indigo", metadata: { kind: "music", album: "Blue" } },
   { key: "the-epic", type: "music", title: "The Epic", creator: "Kamasi Washington", genre: "Jazz", language: "English", description: "A sprawling, three-hour modern jazz statement.", coverTheme: "violet", metadata: { kind: "music", album: "The Epic" } },
   { key: "99pi", type: "podcast", title: "99% Invisible", creator: "Roman Mars", genre: "Design", language: "English", description: "The unnoticed architecture and design that shapes our world.", coverTheme: "green", metadata: { kind: "podcast", show: "99% Invisible", episodeCount: 560 }, totalUnits: 560 },
-  { key: "severance", type: "tv_movie", title: "Severance", creator: "Dan Erickson", genre: "Sci-Fi Thriller", language: "English", description: "Workers surgically divide memories between work and personal life.", coverTheme: "navy", metadata: { kind: "tv_movie", seasons: 2 }, totalUnits: 2 },
-  { key: "arrival", type: "tv_movie", title: "Arrival", creator: "Denis Villeneuve", genre: "Science Fiction", language: "English", description: "A linguist races to communicate with newly arrived visitors.", coverTheme: "teal", metadata: { kind: "tv_movie", runtimeMinutes: 116 }, totalUnits: 116 },
+  { key: "severance", type: "tv", title: "Severance", creator: "Dan Erickson", genre: "Sci-Fi Thriller", language: "English", description: "Workers surgically divide memories between work and personal life.", coverTheme: "navy", metadata: { kind: "video", seasons: 2 }, totalUnits: 2 },
+  { key: "arrival", type: "movie", title: "Arrival", creator: "Denis Villeneuve", genre: "Science Fiction", language: "English", description: "A linguist races to communicate with newly arrived visitors.", coverTheme: "teal", metadata: { kind: "video", runtimeMinutes: 116 }, totalUnits: 116 },
 ];
 
 export const seedCommunityUsers: SeedCommunityUser[] = [
