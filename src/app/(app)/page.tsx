@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { Feed } from "@/components/home/Feed";
 import { FeedFilter } from "@/components/home/FeedFilter";
@@ -53,25 +52,29 @@ export default async function HomePage({
 
   return (
     <>
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Image
+      {/* Hero + feed row. On lg the grid row height is set by the image (the feed
+          cell holds an absolutely-positioned card that fills it), so the feed
+          matches the image height and its list scrolls. Stacks on mobile. */}
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
+        {/* eslint-disable-next-line @next/next/no-img-element -- local static asset in /public; the project standardizes on <img> and skips next/image */}
+        <img
           src="/CommuterReader.png"
           alt="A reader enjoying a book on their commute"
-          width={1408}
-          height={768}
-          priority
-          sizes="(min-width: 1024px) 50vw, 100vw"
-          className="h-auto w-full rounded-xl border border-border object-cover"
+          className="h-auto w-full self-start rounded-xl border border-border object-cover"
         />
-        <Card>
-          <CardHeader>
-            <CardTitle id="feed-title">Community feed</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FeedFilter options={options} activeValue={activeType} hrefFor={feedHrefFor} />
-            <Feed entries={feed} />
-          </CardContent>
-        </Card>
+        <div className="relative min-h-0">
+          <Card className="flex flex-col overflow-hidden lg:absolute lg:inset-0">
+            <CardHeader>
+              <CardTitle id="feed-title">Community feed</CardTitle>
+            </CardHeader>
+            <CardContent className="flex min-h-0 flex-1 flex-col">
+              <FeedFilter options={options} activeValue={activeType} hrefFor={feedHrefFor} />
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <Feed entries={feed} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
       <TrendingSection owned={ownedTrending} activeType={trendingType ?? "all"} hrefFor={trendingHrefFor} />
     </>
