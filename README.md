@@ -76,11 +76,38 @@ Built with **Next.js 15 (App Router) + React 19 + TypeScript** (strict), **Postg
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Load the multi-type catalog, demo goal/achievements, and demo account |
 
-## Deployment (Vercel)
+## Deploy to Vercel
 
-Set `DATABASE_URL` (managed Postgres, e.g. Vercel Postgres / Neon) and `AUTH_SECRET` as project environment variables.
+The app is built for Vercel: the database client detects the serverless runtime (single pooled connection, `prepare: false`), session/OAuth cookies become `secure` in production, and [`vercel.json`](vercel.json) sets the build command to `npm run db:migrate && npm run build` so **migrations apply automatically on every deploy** before the build.
 
-Database migrations are applied automatically on every deploy: [`vercel.json`](vercel.json) sets the build command to `npm run db:migrate && npm run build`, so the schema is brought up to date (against the build-time `DATABASE_URL`) before the app is built.
+1. **Provision Postgres.** Vercel doesn't include one (the bundled pglite is tests-only). Create a managed database — [Neon](https://neon.tech), [Supabase](https://supabase.com), or Vercel Postgres — and copy its connection string. Most providers' pooled URL works for both build-time migrations and runtime here; if `db:migrate` errors on the pooler, use the direct/session URL instead (pool size is 1 per instance, so connection count stays low).
+
+2. **Generate secrets.** `AUTH_SECRET` via `openssl rand -base64 32`. Rotate any provider keys that have been shared outside the host.
+
+3. **Import the repo** into Vercel (New Project → import the Git repo). The framework auto-detects as Next.js; leave the build command to `vercel.json`. Set the deployment **region** near your database.
+
+4. **Set environment variables** (Project → Settings → Environment Variables, Production scope):
+
+   | Variable | Required? | Purpose |
+   |----------|-----------|---------|
+   | `DATABASE_URL` | **Yes** (build + runtime) | Managed Postgres connection string |
+   | `AUTH_SECRET` | **Yes** | Session/OAuth-state cookie signing |
+   | `TMDB_API_KEY` | Movies/TV | TMDB — movie/TV trending, search, and detail enrichment |
+   | `GOOGLE_BOOKS_API_KEY` | Books | Google Books — book metadata and ratings enrichment |
+   | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google sign-in | OAuth 2.0 Web client credentials |
+   | `GOOGLE_REDIRECT_URI` | Google sign-in | `https://<your-domain>/auth/google/callback` |
+   | `NYT_API_KEY` | Trending books | NYT Best Seller API |
+   | `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` | Trending music | Spotify client-credentials OAuth |
+
+   Only `DATABASE_URL` and `AUTH_SECRET` are validated at startup (the app fails fast without them); every provider key is optional and degrades independently if absent.
+
+5. **Register the Google redirect URI.** In Google Cloud Console → Credentials → your OAuth client, add `https://<your-domain>/auth/google/callback` as an Authorized redirect URI — it must match `GOOGLE_REDIRECT_URI` exactly.
+
+6. **Deploy.** The build runs `db:migrate` then `next build`; type and lint errors fail the build by design. The schema (including the movie/TV backfill) is applied against the build-time `DATABASE_URL`.
+
+7. **Seed (optional, one-time).** `db:seed` loads demo data **and clears the seeded tables first**, so it is not part of the build. To populate the demo catalog/community feed once, run it manually against the production database: `DATABASE_URL=<prod-url> npm run db:seed`. Skip it for a clean production catalog.
+
+> **Preview deployments:** a Preview build also runs `db:migrate`. To keep previews from mutating the production database, scope `DATABASE_URL` to Production only (or point Preview at a separate database).
 
 ## Specs & steering
 
